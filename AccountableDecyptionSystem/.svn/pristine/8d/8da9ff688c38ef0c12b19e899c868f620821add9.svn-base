@@ -1,0 +1,196 @@
+package blockchain;
+
+import static org.junit.Assert.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.prefs.PreferenceChangeEvent;
+
+import static blockchain.Database.*;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+public class DatabaseTest {
+	private Connection conn;
+	@Before
+	public void testConnection() {
+		try{
+			conn = getConnection();
+		}catch(SQLException e){
+			fail("connection failed");
+		}
+	}
+
+//		@Test
+		public void createTables(){
+			
+			try {
+				PreparedStatement createTree = conn.prepareStatement("CREATE TABLE Tree(node varchar(64),left_child varchar(64),right_child varchar(64),size_when_created Integer)");
+//				PreparedStatement createLog = conn.prepareStatement("CREATE TABLE Log(leaf_value varchar(64),index Integer)");
+	//			PreparedStatement createRoots = conn.prepareStatement("CREATE TABLE Roots(RTH varchar(64),size Integer)");
+				createTree.executeUpdate();
+//				createLog.executeUpdate();
+			} catch (SQLException e) {
+				
+				e.printStackTrace();
+			}
+		}
+//		@Test
+		public void dropTables(){
+			try {
+				PreparedStatement d1 = conn.prepareStatement("DROP TABLE Tree");
+//				PreparedStatement d2 = conn.prepareStatement("DROP TABLE artists CASCADE");
+	//			PreparedStatement d3 = conn.prepareStatement("DROP TABLE songs CASCADE");
+	//			PreparedStatement d4 = conn.prepareStatement("DROP TABLE tags CASCADE");
+	//			PreparedStatement d5 = conn.prepareStatement("DROP TABLE tags2songs CASCADE");
+				d1.executeUpdate();
+	//			d2.executeUpdate();
+	//			d3.executeUpdate();
+	//			d4.executeUpdate();
+			
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+//		@Test
+	public void showTables(){
+		try {
+			PreparedStatement createTree = conn.prepareStatement("SELECT n.nspname as \"Schema\",c.relname as \"Name\",CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' END as \"Type\",pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"FROM pg_catalog.pg_class c    LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind IN ('r','')    AND n.nspname <> 'pg_catalog'    AND n.nspname <> 'information_schema'    AND n.nspname !~ '^pg_toast'AND pg_catalog.pg_table_is_visible(c.oid)ORDER BY 1,2;");
+			ResultSet r = createTree.executeQuery();
+			while(r.next()){
+				System.out.println(r.getString(2));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+
+	@Test
+	public void testInsert1(){
+		try {
+
+			Database.insertNode(conn, "1");
+			Database.insertNode(conn, "2");
+			Database.insertNode(conn, "3");
+			Database.insertNode(conn, "4");
+			Database.insertNode(conn, "5");
+			Database.insertNode(conn, "6");
+			Database.insertNode(conn, "7");
+			Database.insertNode(conn, "8");
+
+
+			PreparedStatement nodes = conn.prepareStatement("SELECT * FROM Tree ");
+			ResultSet nodesSet = nodes.executeQuery();
+			String hash12 = TreeOps.hash("12");
+			while(nodesSet.next()){
+				System.out.println("node: "+nodesSet.getString(1)+" left: "+nodesSet.getString(2)+" right: "+nodesSet.getString(3)+" size: "+nodesSet.getInt(4));
+			}
+			PreparedStatement roots = conn.prepareStatement("SELECT * FROM roots ");
+			ResultSet rootsSet = roots.executeQuery();
+			while(rootsSet.next()){
+				System.out.println("root: "+rootsSet.getString(1)+" size: "+rootsSet.getString(2));
+			}
+			
+			PreparedStatement log = conn.prepareStatement("SELECT * FROM log ");
+			ResultSet logSet = log.executeQuery();
+			while(logSet.next()){
+				System.out.println("entry: "+logSet.getString(1)+" index: "+logSet.getString(2));
+			}
+//			if( nodesSet.getString(1).equals("1")){
+//				System.out.println("node: "+nodesSet.getString(1)+" left: "+nodesSet.getString(2)+" right: "+nodesSet.getString(3)+" perent: "+nodesSet.getString(5)+" size: "+nodesSet.getInt(4));
+//				assertEquals(nodesSet.getString(1),"1");
+//				assertEquals(nodesSet.getString(2),null);
+//				assertEquals(nodesSet.getString(3),null);
+//				assertEquals(nodesSet.getInt(4),1);
+//				assertEquals(nodesSet.getString(5),null);
+//				assertEquals(nodesSet.getBoolean(6),false);
+//				assertEquals(nodesSet.getBoolean(7),true);
+//			}
+//
+//			else if(nodesSet.getString(1).equals("2")){
+//				System.out.println("node: "+nodesSet.getString(1)+" left: "+nodesSet.getString(2)+" right: "+nodesSet.getString(3)+" perent: "+nodesSet.getString(5)+" size: "+nodesSet.getInt(4));
+//
+//				assertEquals(nodesSet.getString(1),"2");
+//				assertEquals(nodesSet.getString(2),null);
+//				assertEquals(nodesSet.getString(3),null);
+//				assertEquals(nodesSet.getInt(4),2);
+//				assertEquals(nodesSet.getString(5),hash12);
+//				assertEquals(nodesSet.getBoolean(6),false);
+//				assertEquals(nodesSet.getBoolean(7),false);
+//			}
+//			else if(nodesSet.getString(1).equals(hash12)){
+//				System.out.println("node: "+nodesSet.getString(1)+" left: "+nodesSet.getString(2)+" right: "+nodesSet.getString(3)+" perent: "+nodesSet.getString(5)+" size: "+nodesSet.getInt(4));
+//
+//				assertEquals(nodesSet.getString(1),hash12);
+//				assertEquals(nodesSet.getString(2),"1");
+//				assertEquals(nodesSet.getString(3),"2");
+//				assertEquals(nodesSet.getInt(4),2);
+//				assertEquals(nodesSet.getString(5),null);
+//				assertEquals(nodesSet.getBoolean(6),false);
+//				assertEquals(nodesSet.getBoolean(7),true);
+//			}
+
+
+
+
+
+
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			fail("Initial insersion failed");
+		}
+	}
+
+//	@Test
+	public void seeTable(){
+		try {
+			PreparedStatement nodes = conn.prepareStatement("SELECT * FROM Tree");
+			ResultSet nodesSet = nodes.executeQuery();
+			while(nodesSet.next()){
+				System.out.println("node: "+nodesSet.getString(1));
+			}
+			PreparedStatement log = conn.prepareStatement("SELECT * FROM log");
+			ResultSet logSet = log.executeQuery();
+			while(nodesSet.next()){
+				System.out.println("log entry: "+logSet.getString(1));
+			}
+			PreparedStatement hashes = conn.prepareStatement("SELECT * FROM Tree");
+			ResultSet hashSet = hashes.executeQuery();
+			while(nodesSet.next()){
+				System.out.println("root entry: "+hashSet.getString(1));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	@After
+	public void removeEntries(){
+		PreparedStatement del;
+		try {
+			del = conn.prepareStatement("Delete FROM Tree");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM log");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM roots");
+			del.executeUpdate();
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+
+
+}

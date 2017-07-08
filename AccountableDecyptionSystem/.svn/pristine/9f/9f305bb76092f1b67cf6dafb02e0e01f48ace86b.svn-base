@@ -1,0 +1,13 @@
+package blockchain;
+
+import java.util.ArrayList;
+
+public class TreeArray {
+	private ArrayList<String> nodes;
+	
+	public TreeArray(){
+		nodes = new ArrayList<String>();
+		nodes.add("");
+	}
+
+}

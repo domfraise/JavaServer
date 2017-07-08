@@ -1,0 +1,255 @@
+package blockchain;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.json.simple.JSONObject;
+
+public class Database {
+	/*
+	 * This class makes a connection to the database.
+	 * @return conn, the connection that to the the database
+	 */
+	public static Connection getConnection() throws SQLException{
+		try { 
+
+			Class.forName("org.postgresql.Driver").newInstance();
+		}
+		catch(ClassNotFoundException e) {
+			System.out.println("Error: unable to load driver class!");
+			System.exit(1);
+		}
+		catch(IllegalAccessException ex) {
+			System.out.println("Error: access problem while loading!");
+			System.exit(2);
+		}
+		catch(InstantiationException ex) {
+			System.out.println("Error: unable to instantiate driver!");
+			System.exit(3);
+		} 
+		Connection conn = null;
+		try {
+			conn = DriverManager.getConnection("jdbc:postgresql://mod-fund-databases.cs.bham.ac.uk/", "dxf695", "5tfn4636np");
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+		}
+
+		return conn;
+
+	}
+	static double log(int x, int base)
+	{
+		return (Math.log(x) / Math.log(base));
+	}
+
+	public static int getPowOf2(int numEntries){
+		if(numEntries ==0) return 0;
+		if(numEntries ==1){
+			return 1;
+		}
+		double val = log(numEntries,2);
+		if(val%1 ==0){
+
+			return (int) Math.pow(2,(int) val);
+		}else{
+			return (int) Math.pow(2,((int) val)+1);
+		}
+	}
+
+	public static boolean isPow2(int i){
+		return (i & (i - 1)) == 0;
+	}
+
+	public static JSONObject provePresence(String rth,int i) throws SQLException{
+		Connection conn = getConnection();
+		PreparedStatement getLeaf = conn.prepareStatement("SELECT * FROM log WHERE index = ?");
+		getLeaf.setInt(1, i);
+		ResultSet leaf = getLeaf.executeQuery();leaf.next();
+		String leaf_value = leaf.getString(1);
+		PreparedStatement getNode = conn.prepareStatement("SELECT * FROM Tree WHERE node = ? ");
+		getNode.setString(1, rth);
+		ResultSet node = getNode.executeQuery();node.next();
+		return provePresenceRec(conn, rth, leaf_value, i, 0,node.getInt(4));
+
+
+
+
+	}
+
+	public static JSONObject provePresenceRec(Connection conn,String nodeValue,String leaf,int index,int offset,int size) throws SQLException{
+		PreparedStatement getNode = conn.prepareStatement("SELECT * FROM Tree WHERE node = ? ");
+		getNode.setString(1, nodeValue);
+		ResultSet node = getNode.executeQuery();node.next();
+		String left = node.getString(2);
+		String right= node.getString(3);
+		//		int size = node.getInt(4);
+		if(nodeValue.equals(leaf)){
+			return new JSONObject();
+		}
+		else if(leaf.equals(left)){
+			JSONObject leafProof = new JSONObject();
+			leafProof.put("Right", right);
+			return leafProof;
+		}
+		else if(leaf.equals(right)){
+			JSONObject leafProof = new JSONObject();
+			leafProof.put("Left", left);
+			return leafProof;
+		}
+		else{
+
+			if(index-offset >=getPowOf2(size)/2){
+				JSONObject leafProof = new JSONObject();
+				leafProof.put("Left", left);
+				leafProof.put("Right", provePresenceRec(conn, right, leaf, index, offset+getPowOf2(size)/2,size-getPowOf2(size)/2));
+				return leafProof;
+			}else{
+				JSONObject leafProof = new JSONObject();
+				leafProof.put("Left", provePresenceRec(conn, left, leaf, index, offset,getPowOf2(size)/2));
+				leafProof.put("Right",  right);
+				return leafProof;
+			}
+
+
+		}
+
+	}
+
+
+	/**
+	 * Inserts an entry into a merkel tree stored in a database. Added to tables Tree, and Log. Updates all nodes to new values. places new RTH in roots table
+	 * @param conn Connection Database connection
+	 * @param entry String leaf to be inserted
+	 * @throws SQLException
+	 */
+	public static void insertEntry(Connection conn,String entry) throws SQLException{
+		//get current size
+		PreparedStatement getCurrentSize = conn.prepareStatement("SELECT MAX(size_when_created) FROM Tree");
+		ResultSet sizeSet = getCurrentSize.executeQuery();sizeSet.next();
+		int currentSize = sizeSet.getInt(1);
+
+		PreparedStatement insertIntoLog = conn.prepareStatement("INSERT INTO Log(leaf_value,index) VALUES(?,?)");
+		insertIntoLog.setString(1, entry);insertIntoLog.setInt(2, currentSize);//index 1 less
+		insertIntoLog.executeUpdate();
+
+		PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots ORDER BY size DESC LIMIT 1");
+		PreparedStatement getNode = conn.prepareStatement("SELECT * FROM Tree WHERE node = ?");
+		PreparedStatement getParent = conn.prepareStatement("SELECT * FROM Tree WHERE right_child = ? or left_child = ? ORDER BY size_when_created DESC");
+		PreparedStatement insertIntoTree = conn.prepareStatement("INSERT INTO Tree (node,left_child,right_child,size_when_created,path_length) VALUES(?,?,?,?,?)");
+		PreparedStatement insertIntoRoots = conn.prepareStatement("INSERT INTO Roots(RTH,size) VALUES(?,?)");
+		PreparedStatement getPathLength = conn.prepareStatement("SELECT path_length FROM Tree WHERE node = ?");
+
+
+		ResultSet root = getRoot.executeQuery();
+		//empty tree
+		if(!root.isBeforeFirst()){
+			insertIntoRoots.setString(1,entry);
+			insertIntoRoots.setInt(2,currentSize+1);
+			insertIntoRoots.executeUpdate();
+
+			insertIntoTree.setString(1,entry);
+			insertIntoTree.setNull(2, java.sql.Types.VARCHAR);
+			insertIntoTree.setNull(3, java.sql.Types.VARCHAR);
+			insertIntoTree.setInt(4, currentSize+1);
+			insertIntoTree.setInt(5, 0);
+
+			insertIntoTree.executeUpdate();
+			return;
+
+		}
+		root.next();
+		getNode.setString(1, root.getString(1));
+		ResultSet node = getNode.executeQuery();//root
+		int nodeSize = currentSize;
+		//while not past the end
+		while(node.isBeforeFirst()){
+			node.next();
+			//if node symetric
+			if(isPow2(nodeSize)){
+				//take root as left, value as right, hash together create node
+				String oldValue = node.getString(1);
+				String newValue = TreeOps.hash(oldValue.concat(entry));
+				getParent.setString(1, oldValue);
+				getParent.setString(2, oldValue);
+
+				ResultSet parent = getParent.executeQuery();
+
+				insertIntoTree.setString(1,newValue);
+				insertIntoTree.setString(2, oldValue);
+				insertIntoTree.setString(3, entry);
+				insertIntoTree.setInt(4, currentSize+1);
+
+				getPathLength.setString(1, oldValue);
+				ResultSet len = getPathLength.executeQuery();
+				len.next();
+				insertIntoTree.setInt(5, len.getInt(1)+1);
+
+				insertIntoTree.executeUpdate();
+				//insert leaf
+				insertIntoTree.setString(1,entry);
+				insertIntoTree.setNull(2, java.sql.Types.VARCHAR);
+				insertIntoTree.setNull(3, java.sql.Types.VARCHAR);
+				insertIntoTree.setInt(4, currentSize+1);
+				insertIntoTree.setInt(5, 0);
+
+				insertIntoTree.executeUpdate();
+
+
+				//loop till no parent
+				String newHash;
+				if(node.getString(2)==null){
+					newHash =TreeOps.hash(node.getString(1).concat(entry));
+
+				}else{
+					newHash = TreeOps.hash(node.getString(2).concat(node.getString(3)));
+				}
+				while(parent.isBeforeFirst()){
+					parent.next();
+					newHash = TreeOps.hash(parent.getString(2).concat(newValue));
+					insertIntoTree.setString(1,newHash);
+					insertIntoTree.setString(2, parent.getString(2));
+					insertIntoTree.setString(3, newValue);
+					insertIntoTree.setInt(4, currentSize+1);
+
+					getPathLength.setString(1,parent.getString(2));
+					len = getPathLength.executeQuery();
+					len.next();
+					insertIntoTree.setInt(5, len.getInt(1)+1);
+
+
+					insertIntoTree.executeUpdate();
+
+					oldValue = parent.getString(1);
+					newValue = newHash;
+					getParent.setString(1, oldValue);
+					getParent.setString(2, oldValue);
+
+					parent = getParent.executeQuery();
+				}
+				insertIntoRoots.setString(1,newValue);
+				insertIntoRoots.setInt(2,currentSize+1);
+				insertIntoRoots.executeUpdate();
+				break;
+				//get parent of old root, update that right node
+				//node = parent of old root
+
+			}
+			//asymetric
+			else{
+				getNode.setString(1, node.getString(3));
+				node = getNode.executeQuery();
+
+				nodeSize -= getPowOf2(nodeSize)/2;
+			}
+		}
+	}
+
+
+
+
+
+
+}

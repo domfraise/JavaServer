@@ -1,0 +1,699 @@
+package blockchain;
+
+import static org.junit.Assert.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.prefs.PreferenceChangeEvent;
+
+import static blockchain.Database.*;
+import static blockchain.TreeOps.extend;
+
+import org.json.simple.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+public class DatabaseTest {
+	private Connection conn;
+	@Before
+	public void testConnection() {
+		try{
+			conn = getConnection();
+		}catch(SQLException e){
+			fail("connection failed");
+		}
+	}
+//	@Test
+//	public void testGetPow2(){
+//		assertEquals(4,Database.getPowOf2(3));
+//	}
+//	@Test
+//	public void testGetPow21(){
+//		assertEquals(4,Database.getPowOf2(4));
+//	}
+//	@Test
+//	public void testGetPow22(){
+//		assertEquals(8,Database.getPowOf2(6));
+//	}
+//	@Test
+//	public void testGetPow23(){
+//		assertEquals(8,Database.getPowOf2(7));
+//	}
+	@Test
+	public void testGetPow24(){
+		assertEquals(8,Database.getPowOf2(8));
+	}
+	@Test
+	public void testGetlog(){
+		for(int i=0;i<10;i++){
+			System.out.println("input:"+i+" :"+getPowOf2(i));
+		}
+	}
+//		@Test
+		public void createTables(){
+			
+			try {
+				PreparedStatement createTree = conn.prepareStatement("CREATE TABLE Tree(node varchar(64),left_child varchar(64),right_child varchar(64),size_when_created Integer,path_length Integer)");
+//				PreparedStatement createLog = conn.prepareStatement("CREATE TABLE Log(leaf_value varchar(64),index Integer)");
+	//			PreparedStatement createRoots = conn.prepareStatement("CREATE TABLE Roots(RTH varchar(64),size Integer)");
+				createTree.executeUpdate();
+//				createLog.executeUpdate();
+			} catch (SQLException e) {
+				
+				e.printStackTrace();
+			}
+		}
+//		@Test
+		public void dropTables(){
+			try {
+				PreparedStatement d1 = conn.prepareStatement("DROP TABLE Tree");
+
+				d1.executeUpdate();
+
+			
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+//		@Test
+	public void showTables(){
+		try {
+			PreparedStatement createTree = conn.prepareStatement("SELECT n.nspname as \"Schema\",c.relname as \"Name\",CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' END as \"Type\",pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"FROM pg_catalog.pg_class c    LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind IN ('r','')    AND n.nspname <> 'pg_catalog'    AND n.nspname <> 'information_schema'    AND n.nspname !~ '^pg_toast'AND pg_catalog.pg_table_is_visible(c.oid)ORDER BY 1,2;");
+			ResultSet r = createTree.executeQuery();
+			while(r.next()){
+				System.out.println(r.getString(2));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+//	  @Test
+	  public void testrRth(){
+
+			try {
+				Database.insertEntry(conn, "1");
+				Database.insertEntry(conn, "2");
+				Database.insertEntry(conn, "3");
+				Database.insertEntry(conn, "4");
+				Database.insertEntry(conn, "5");
+				Database.insertEntry(conn, "6");
+				Database.insertEntry(conn, "7");
+				Database.insertEntry(conn, "8");
+				Database.insertEntry(conn, "9");
+				Database.insertEntry(conn, "10");
+				Database.insertEntry(conn, "11");
+				Database.insertEntry(conn, "12");
+				Database.insertEntry(conn, "13");
+				Database.insertEntry(conn, "14");
+				Database.insertEntry(conn, "15");
+				Database.insertEntry(conn, "16");
+				Database.insertEntry(conn, "17");
+				Database.insertEntry(conn, "18");
+				Database.insertEntry(conn, "19");
+				Database.insertEntry(conn, "20");
+				PreparedStatement roots = conn.prepareStatement("SELECT * FROM roots ORDER BY size ASC");
+				ResultSet rootsSet = roots.executeQuery();
+				Tree o = new Tree();
+				for(int i=1;i<21;i++){
+					o = extend(o,Integer.toString(i));
+					rootsSet.next();
+					assertEquals(o.getValue(), rootsSet.getString(1));
+					
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			 
+
+	  }
+	 
+
+//	@Test
+	public void testInsert1(){
+		try {
+
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			Database.insertEntry(conn, "5");
+			Database.insertEntry(conn, "6");
+			Database.insertEntry(conn, "7");
+			Database.insertEntry(conn, "8");
+			Database.insertEntry(conn, "9");
+			Database.insertEntry(conn, "10");
+			Database.insertEntry(conn, "11");
+
+			PreparedStatement nodes = conn.prepareStatement("SELECT * FROM Tree ");
+			ResultSet nodesSet = nodes.executeQuery();
+			String hash12 = TreeOps.hash("12");
+			while(nodesSet.next()){
+				System.out.println("node: "+nodesSet.getString(1)+" left: "+nodesSet.getString(2)+" right: "+nodesSet.getString(3)+" size: "+nodesSet.getInt(4)+" path length: "+nodesSet.getInt(5));
+			}
+			PreparedStatement roots = conn.prepareStatement("SELECT * FROM roots ");
+			ResultSet rootsSet = roots.executeQuery();
+			while(rootsSet.next()){
+				System.out.println("root: "+rootsSet.getString(1)+" size: "+rootsSet.getString(2));
+			}
+			
+			PreparedStatement log = conn.prepareStatement("SELECT * FROM log ");
+			ResultSet logSet = log.executeQuery();
+			while(logSet.next()){
+				System.out.println("entry: "+logSet.getString(1)+" index: "+logSet.getString(2));
+			}
+			PreparedStatement del;
+			del = conn.prepareStatement("Delete FROM Tree");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM log");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM roots");
+			del.executeUpdate();
+
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			fail("Initial insersion failed");
+		}
+	}
+	
+	
+	
+
+	@Test
+	public void seeTable(){
+		try {
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			Database.insertEntry(conn, "5");
+			Database.insertEntry(conn, "6");
+			Database.insertEntry(conn, "7");
+			Database.insertEntry(conn, "8");
+			Database.insertEntry(conn, "9");
+			Database.insertEntry(conn, "10");
+			Database.insertEntry(conn, "11");
+			PreparedStatement nodes = conn.prepareStatement("SELECT * FROM Tree");
+			ResultSet nodesSet = nodes.executeQuery();
+			while(nodesSet.next()){
+				System.out.println("node: "+nodesSet.getString(1)+" left: "+nodesSet.getString(2)+" right: "+nodesSet.getString(3)+" size: "+nodesSet.getInt(4)+" path length: "+nodesSet.getInt(5));
+			}
+			PreparedStatement log = conn.prepareStatement("SELECT * FROM log");
+			ResultSet logSet = log.executeQuery();
+			while(nodesSet.next()){
+				System.out.println("log entry: "+logSet.getString(1));
+			}
+			PreparedStatement hashes = conn.prepareStatement("SELECT * FROM Tree");
+			ResultSet hashSet = hashes.executeQuery();
+			while(nodesSet.next()){
+				System.out.println("root entry: "+hashSet.getString(1));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
+	@Test
+	public void testProofPresence(){
+		try {
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots ORDER BY size DESC LIMIT 1");
+			ResultSet root = getRoot.executeQuery(); root.next();
+
+//			System.out.println(provePresence(root.getString(1), 3).toJSONString());
+			assertEquals("{\"Left\":\"6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918\",\"Right\":{\"Left\":\"3\"}}",provePresence(root.getString(1), 3).toJSONString());
+			PreparedStatement del;
+			
+				del = conn.prepareStatement("Delete FROM Tree");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM log");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM roots");
+				del.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+//	@Test
+	public void testProofPresence2(){
+		try {
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots ORDER BY size DESC LIMIT 1");
+			ResultSet root = getRoot.executeQuery(); root.next();
+
+//			System.out.println(provePresence(root.getString(1), 0).toJSONString());
+			assertEquals("{\"Left\":{\"Right\":\"2\"},\"Right\":\"86e50149658661312a9e0b35558d84f6c6d3da797f552a9657fe0558ca40cdef\"}",provePresence(root.getString(1), 0).toJSONString());
+			PreparedStatement del;
+			
+				del = conn.prepareStatement("Delete FROM Tree");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM log");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM roots");
+				del.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	@Test
+	public void testProofPresence3(){
+		try {
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots ORDER BY size DESC LIMIT 1");
+			ResultSet root = getRoot.executeQuery(); root.next();
+
+			System.out.println(provePresence(root.getString(1), 1).toJSONString());
+//			assertEquals("{\"Left\":{\"Left\":\"1\"},\"Right\":\"86e50149658661312a9e0b35558d84f6c6d3da797f552a9657fe0558ca40cdef\"}",provePresence(root.getString(1), 1).toJSONString());
+			PreparedStatement del;
+			
+				del = conn.prepareStatement("Delete FROM Tree");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM log");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM roots");
+				del.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testProofPresence4(){
+		try {
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			Database.insertEntry(conn, "5");
+			Database.insertEntry(conn, "6");
+			Database.insertEntry(conn, "7");
+			Database.insertEntry(conn, "8");
+			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots ORDER BY size DESC LIMIT 1");
+			ResultSet root = getRoot.executeQuery(); root.next();
+			for(int i=0;i<8;i++){
+				System.out.println(provePresence(root.getString(1), i).toJSONString());
+				
+			}
+//			System.out.println(provePresence(root.getString(1), 3).toJSONString());
+//			assertEquals("{\"Left\":{\"Left\":\"6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918\",\"Right\":{\"Left\":\"3\"}},\"Right\":\"7688b6ef52555962d008fff894223582c484517cea7da49ee67800adc7fc8866\"}",provePresence(root.getString(1), 3).toJSONString());
+			PreparedStatement del;
+			
+				del = conn.prepareStatement("Delete FROM Tree");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM log");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM roots");
+				del.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	@Test
+	public void testProovePresenceEmpty(){
+		PreparedStatement getRoot;
+		try {
+			getRoot = conn.prepareStatement("SELECT * FROM roots ORDER BY size DESC LIMIT 1");
+			ResultSet root = getRoot.executeQuery(); root.next();
+	
+			assertEquals("{}",provePresence("", 0).toJSONString());
+			fail();
+				
+			
+		}catch(IllegalArgumentException e){
+			System.out.println(e.getMessage());
+			//should throw illegal argument
+		}
+		catch (SQLException e) {
+			fail();
+		}
+	}
+	
+	@Test
+	public void testProovePresenceWrongHash(){
+		PreparedStatement getRoot;
+		try {
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			Database.insertEntry(conn, "5");
+			getRoot = conn.prepareStatement("SELECT * FROM roots ORDER BY size DESC LIMIT 1");
+			ResultSet root = getRoot.executeQuery(); root.next();
+	
+			assertEquals("{}",provePresence("wrong hash", 0).toJSONString());
+			fail();
+			
+			
+				
+			
+		}catch(IllegalArgumentException e){
+			System.out.println(e.getMessage());
+			//should throw illegal argument
+		}
+		catch (SQLException e) {
+			fail();
+		}finally{
+			PreparedStatement del;
+			
+			try {
+				del = conn.prepareStatement("Delete FROM Tree");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM log");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM roots");
+				del.executeUpdate();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	@Test
+	public void testProofPresence5(){
+		try {
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			Database.insertEntry(conn, "5");
+			Database.insertEntry(conn, "6");
+			Database.insertEntry(conn, "7");
+			Database.insertEntry(conn, "8");
+			Database.insertEntry(conn, "9");
+			Database.insertEntry(conn, "10");
+			Database.insertEntry(conn, "11");
+			Database.insertEntry(conn, "12");
+			Database.insertEntry(conn, "13");
+			Database.insertEntry(conn, "14");
+			Database.insertEntry(conn, "15");
+			Database.insertEntry(conn, "16");
+			Database.insertEntry(conn, "17");
+			Database.insertEntry(conn, "18");
+			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots ORDER BY size DESC LIMIT 1");
+			ResultSet root = getRoot.executeQuery(); root.next();
+			for(int i=0;i<18;i++){
+				System.out.println(provePresence(root.getString(1), i).toJSONString());
+				
+			}
+//			assertEquals("{\"Left\":{\"Left\":\"6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918\",\"Right\":{\"Left\":\"3\"}},\"Right\":\"7688b6ef52555962d008fff894223582c484517cea7da49ee67800adc7fc8866\"}",provePresence(root.getString(1), 3).toJSONString());
+			PreparedStatement del;
+			
+				del = conn.prepareStatement("Delete FROM Tree");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM log");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM roots");
+				del.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testProofPresencePrevious(){
+		try {
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			Database.insertEntry(conn, "5");
+			Database.insertEntry(conn, "6");
+			Database.insertEntry(conn, "7");
+			Database.insertEntry(conn, "8");
+			Database.insertEntry(conn, "9");
+			Database.insertEntry(conn, "10");
+			Database.insertEntry(conn, "11");
+			Database.insertEntry(conn, "12");
+			Database.insertEntry(conn, "13");
+			Database.insertEntry(conn, "14");
+			Database.insertEntry(conn, "15");
+			Database.insertEntry(conn, "16");
+			Database.insertEntry(conn, "17");
+			Database.insertEntry(conn, "18");
+			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 8 ORDER BY size DESC LIMIT 1");
+			ResultSet root = getRoot.executeQuery(); root.next();
+			for(int i=0;i<8;i++){
+				System.out.println(provePresence(root.getString(1), i).toJSONString());
+				
+			}
+//			assertEquals("{\"Left\":{\"Left\":\"6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918\",\"Right\":{\"Left\":\"3\"}},\"Right\":\"7688b6ef52555962d008fff894223582c484517cea7da49ee67800adc7fc8866\"}",provePresence(root.getString(1), 3).toJSONString());
+			PreparedStatement del;
+			
+				del = conn.prepareStatement("Delete FROM Tree");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM log");
+				del.executeUpdate();
+				del = conn.prepareStatement("Delete FROM roots");
+				del.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
+	@Test
+	public void testExtension(){
+		try {
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			Database.insertEntry(conn, "5");
+			Database.insertEntry(conn, "6");
+			
+			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 4 ORDER BY size DESC LIMIT 1");
+			ResultSet root = getRoot.executeQuery(); root.next();
+			String g = root.getString(1);
+			
+			 getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 6 ORDER BY size DESC LIMIT 1");
+			 root = getRoot.executeQuery(); root.next();
+			 String h = root.getString(1);
+			 JSONObject[] proofs = proveExtensionRec(conn, g, h);
+			 System.out.println(proofs[0]);
+			 System.out.println(proofs[1]);
+
+			
+			PreparedStatement del;
+			
+			del = conn.prepareStatement("Delete FROM Tree");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM log");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM roots");
+			del.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testExtension2(){
+		try {
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			Database.insertEntry(conn, "5");
+			Database.insertEntry(conn, "6");
+			Database.insertEntry(conn, "7");
+			Database.insertEntry(conn, "8");
+			
+			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 5 ORDER BY size DESC LIMIT 1");
+			ResultSet root = getRoot.executeQuery(); root.next();
+			String g = root.getString(1);
+			
+			 getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 8 ORDER BY size DESC LIMIT 1");
+			 root = getRoot.executeQuery(); root.next();
+			 String h = root.getString(1);
+			 JSONObject[] proofs = proveExtensionRec(conn, g, h);
+			 System.out.println(proofs[0]);
+			 System.out.println(proofs[1]);
+
+			
+			PreparedStatement del;
+			
+			del = conn.prepareStatement("Delete FROM Tree");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM log");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM roots");
+			del.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testExtension3(){
+		try {
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			Database.insertEntry(conn, "5");
+			Database.insertEntry(conn, "6");
+			Database.insertEntry(conn, "7");
+			Database.insertEntry(conn, "8");
+			
+			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 1 ORDER BY size DESC LIMIT 1");
+			ResultSet root = getRoot.executeQuery(); root.next();
+			String g = root.getString(1);
+			
+			 getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 7 ORDER BY size DESC LIMIT 1");
+			 root = getRoot.executeQuery(); root.next();
+			 String h = root.getString(1);
+			 JSONObject[] proofs = proveExtensionRec(conn, g, h);
+			 System.out.println(proofs[0]);
+			 System.out.println(proofs[1]);
+
+			
+			PreparedStatement del;
+			
+			del = conn.prepareStatement("Delete FROM Tree");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM log");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM roots");
+			del.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test 
+	public void fullTestProofs(){
+		try {
+			Database.insertEntry(conn, "1");
+			Database.insertEntry(conn, "2");
+			Database.insertEntry(conn, "3");
+			Database.insertEntry(conn, "4");
+			Database.insertEntry(conn, "5");
+			String ll = TreeOps.hash("1".concat("2"));
+			String rr = TreeOps.hash("3".concat("4"));
+			String l = TreeOps.hash(ll.concat(rr));
+			String r = "5";
+			String root = TreeOps.hash(l.concat(r));
+			
+			//prove presence of index 2
+			JSONObject expected = new JSONObject();
+			expected.put("RTH", root);
+			expected.put("Index", 2);
+			expected.put("Value", "3");
+			JSONObject tree = new JSONObject();
+			JSONObject treeL = new JSONObject();
+			JSONObject treeLR = new JSONObject();
+			JSONObject hash = new JSONObject();
+			hash.put("Hash", "4");
+			treeLR.put("Right", hash);
+			hash = new JSONObject();
+			hash.put("Hash", ll);
+			treeL.put("Left", hash);
+			
+			treeL.put("Right", treeLR);
+			tree.put("Left",treeL);
+			hash = new JSONObject();
+			hash.put("Hash", "5");
+			tree.put("Right", hash);
+			expected.put("Proof", tree);
+			JSONObject actual = provePresence(root, 2);
+			assertEquals(expected, actual);
+			
+			writeJsonToFile( actual,"C:\\Users\\Dom\\Desktop\\presenceIndex2Size5.JSON");
+
+			//proveextension size 2 to size 5
+			expected = new JSONObject();
+			expected.put("OldRTH", ll);
+			expected.put("NewRTH", root);
+			
+			JSONObject old = new JSONObject();
+			old.put("Hash", ll);
+			JSONObject newTree = new JSONObject();
+			
+			
+			JSONObject left = new JSONObject();
+			JSONObject leftLeft = new JSONObject();
+			leftLeft.put("Hash", ll);
+			left.put("Left", leftLeft);
+			JSONObject leftRight = new JSONObject();
+			leftRight.put("Hash", rr);
+			left.put("Right", leftRight);
+			newTree.put("Left",	left);
+			JSONObject Right = new JSONObject();
+			Right.put("Hash", "5");
+
+			newTree.put("Right", Right);
+			
+			expected.put("OldProof", old);
+			expected.put("NewProof", newTree);
+			
+			 actual = proveExtension(conn,ll, root);
+			assertEquals(expected, proveExtension(conn,ll, root));
+
+			
+			writeJsonToFile( actual,"C:\\Users\\Dom\\Desktop\\extensionSize2ToSize5.JSON");
+
+
+
+			
+
+
+
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@After
+	public void removeEntries(){
+		PreparedStatement del;
+		try {
+			del = conn.prepareStatement("Delete FROM Tree");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM log");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM roots");
+			del.executeUpdate();
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+
+
+}

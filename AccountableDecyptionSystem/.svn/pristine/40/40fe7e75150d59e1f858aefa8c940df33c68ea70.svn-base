@@ -1,0 +1,69 @@
+package blockchain;
+
+import static blockchain.Database.getConnection;
+import static org.junit.Assert.*;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import org.junit.Before;
+import org.junit.Test;
+
+public class RequestQueueTest {
+	private Connection conn;
+	private RequestQueue q;
+	DecryptionRequest r1;
+	DecryptionRequest r2;
+	DecryptionRequest r3;
+	DecryptionRequest r4;
+	DecryptionRequest r5;
+	@Before
+	public void testConnection() {
+		try{
+			conn = getConnection();
+			q = new RequestQueue(conn);
+			r1 = new DecryptionRequest(conn, "Google", "Alan", "1", "Terrorist");
+			q.add(r1);
+			r2 = new DecryptionRequest(conn, "Google", "Alan", "2", "Terrorist");
+			q.add(r2);
+			r3 = new DecryptionRequest(conn, "Google", "Alan", "3", "Terrorist");
+			q.add(r3);
+			r4 = new DecryptionRequest(conn, "Google", "Alan", "4", "Terrorist");
+			q.add(r4);
+			r5 = new DecryptionRequest(conn, "Google", "Alan", "5", "Terrorist");
+			q.add(r5);
+
+
+		}catch(SQLException e){
+			e.printStackTrace();
+			fail("connection failed");
+		}catch(Exception r){
+			r.printStackTrace();
+		}
+		
+	}
+	@Test
+	public void testRTHMatch() {
+		String actual;
+		try {
+			 actual = Database.getRoot(conn);
+		} catch (SQLException e) {
+			actual = null;
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Tree t = new Tree();
+		t = TreeOps.extend(t, "1");
+		t = TreeOps.extend(t, r1.getRequestHash());
+		t = TreeOps.extend(t, "2");
+		t = TreeOps.extend(t, r2.getRequestHash());
+		t = TreeOps.extend(t, "3");
+		t = TreeOps.extend(t, r3.getRequestHash());
+		t = TreeOps.extend(t, "4");
+		t = TreeOps.extend(t, r4.getRequestHash());
+		t = TreeOps.extend(t, "5");
+		t = TreeOps.extend(t, r5.getRequestHash());
+		assertEquals(t.getValue(), actual);
+	}
+
+}

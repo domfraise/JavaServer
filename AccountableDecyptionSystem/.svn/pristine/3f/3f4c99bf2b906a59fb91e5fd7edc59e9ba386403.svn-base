@@ -1,0 +1,71 @@
+package blockchain;
+
+import java.util.ArrayList;
+
+public class MerkelTree {
+
+	private Node head;
+	private MerkelTree left;
+	private MerkelTree right;
+	
+	public MerkelTree(){
+	
+		setHead(null);
+		setLeft(null);
+		setRight(null);
+		
+	}
+	public MerkelTree(Node node){
+		
+		setHead(node);
+		setLeft(null);
+		setRight(null);
+		
+	}
+	
+	public MerkelTree(Node node, MerkelTree left, MerkelTree right){
+		
+		setHead(node);
+		setLeft(left);
+		setRight(right);
+		
+	}
+	/**
+	 * Inserts a hashed data item to the merkel tree and update all nodes
+	 * @param hash
+	 */
+	public void insertHash(byte[] hash){
+		Node newNode = new Node(hash);
+		if(getHead() == null){
+			setHead(newNode);
+		}else if(getRight() == null){
+			setRight(new MerkelTree(newNode));
+		}
+	}
+
+
+
+	public Node getHead() {
+		return head;
+	}
+
+	public void setHead(Node head) {
+		this.head = head;
+	}
+
+	public MerkelTree getLeft() {
+		return left;
+	}
+
+	public void setLeft(MerkelTree left) {
+		this.left = left;
+	}
+
+	public MerkelTree getRight() {
+		return right;
+	}
+
+	public void setRight(MerkelTree right) {
+		this.right = right;
+	}
+}

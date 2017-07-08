@@ -1,0 +1,41 @@
+package blockchain;
+
+public class Node {
+	private byte [] contents;
+	private Node left;
+	private Node right;
+	
+	public Node(){
+		this.contents = null;
+		this.left = null;
+		this.right = null;
+	}
+	public Node(byte[] contents){
+		this.contents = contents;
+		this.left = null;
+		this.right = null;
+	}
+	public Node(byte[] contents,Node left, Node right){
+		this.contents = contents;
+		this.left = left;
+		this.right = right;
+	}
+	public byte[] getContents() {
+		return contents;
+	}
+	public void setContents(byte[] contents) {
+		this.contents = contents;
+	}
+	public Node getLeft() {
+		return left;
+	}
+	public void setLeft(Node left) {
+		this.left = left;
+	}
+	public Node getRight() {
+		return right;
+	}
+	public void setRight(Node right) {
+		this.right = right;
+	}
+}

@@ -1,0 +1,53 @@
+package blockchain;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.LinkedList;
+
+import org.json.simple.JSONObject;
+
+public class RequestQueue extends LinkedList<DecryptionRequest>{
+	private String oldRoot;
+	private String newRoot;
+	private Connection conn;
+	public RequestQueue(Connection conn) throws SQLException{
+		super();
+		oldRoot = Database.getRoot(conn);
+		newRoot = oldRoot;
+	}
+	
+	@Override
+	public boolean add(DecryptionRequest e){
+		super.add(e);
+		try {
+			Database.insertRequest(conn, e);
+			
+			newRoot = Database.getRoot(conn);
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}catch(NullPointerException e2){
+			
+		}
+		return true;
+	}
+	
+	@Override
+	public DecryptionRequest remove(){
+		DecryptionRequest request = super.remove();
+		int sizeWhenAdded;
+		try {
+			sizeWhenAdded = Database.getSizeWhenCreated(conn, request.getFileHash());
+			oldRoot = Database.getRootSize(conn, sizeWhenAdded);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return request;
+	}
+	
+	public JSONObject getProofOfExtension() throws SQLException{
+		return Proofs.proveExtension(conn, oldRoot, newRoot);
+	}
+	
+}

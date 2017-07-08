@@ -1,0 +1,7 @@
+package blockchain;
+
+public class ServerMethods {
+	public static byte[] makeRequest(String company,String user,String fileHash,String reason){
+		return null;
+	}
+}
