@@ -373,48 +373,7 @@ public class DatabaseTest {
 			e.printStackTrace();
 		}
 	}
-	
-	@Test
-	public void testProveAbsence(){
-		try {
-			insertEntry(conn, hashFile("C:\\Users\\Dom\\Documents\\myfile1.txt"));
-			insertEntry(conn, hashFile("C:\\Users\\Dom\\Documents\\myfile4.txt"));
 
-			
-			ArrayList<String[]> actual = proveAbsence(conn,"domfraise");
-			String [] expected = new String[5];
-			expected[0] = "Google";
-			expected[1] = "dave";
-			expected[2] = hashFile("C:\\Users\\Dom\\Documents\\myfile1.txt");
-			expected[3] = "I think he's a terrorist";
-			
-			
-			for(int i=0;i<4;i++){
-				assertEquals(expected[i], actual.get(0)[i]);
-			}
-			System.out.println(actual.get(0)[4]);
-			
-			expected[0] = "Google";
-			expected[1] = "alan";
-			expected[2] = hashFile("C:\\Users\\Dom\\Documents\\myfile4.txt");
-			expected[3] = "I think he's a flight risk";
-			
-			
-			for(int i=0;i<4;i++){
-				assertEquals(expected[i], actual.get(1)[i]);
-			}
-			System.out.println(actual.get(1)[4]);
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 	
 	@After
 	public void removeEntries(){

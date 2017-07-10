@@ -1,11 +1,16 @@
 package blockchain;
 
 import static blockchain.Database.getConnection;
+import static blockchain.Database.hashFile;
+import static blockchain.Database.insertEntry;
+import static blockchain.Proofs.proveAbsence;
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import org.junit.After;
 import org.junit.Before;
@@ -170,6 +175,52 @@ public class RequestQueueTest {
 		t = TreeOps.extend(t, r3.getRequestHash());
 		assertEquals(q.getNewRoot(), t.getValue());
 	}
+	
+	
+	@Test
+	public void testProveAbsence(){
+		try {
+			q.add(r1);
+			q.add(r4);
+			
+		
+			
+			
+			ArrayList<String[]> actual = proveAbsence(conn,"domfraise");
+			String [] expected = new String[5];
+			expected[0] = "Google";
+			expected[1] = "Alan";
+			expected[2] = hashFile("C:\\Users\\Dom\\Documents\\myfile1.txt");
+			expected[3] = "Terrorist";
+			
+			
+			for(int i=0;i<4;i++){
+				assertEquals(expected[i], actual.get(0)[i]);
+			}
+			System.out.println(actual.get(0)[4]);
+			
+			expected[0] = "Google";
+			expected[1] = "Alan";
+			expected[2] = hashFile("C:\\Users\\Dom\\Documents\\myfile4.txt");
+			expected[3] = "Terrorist";
+			
+			
+			for(int i=0;i<4;i++){
+				assertEquals(expected[i], actual.get(1)[i]);
+			}
+			System.out.println(actual.get(1)[4]);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	
 	@After
 	public void removeEntries(){

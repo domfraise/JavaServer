@@ -1,15 +1,20 @@
 package blockchain;
 
 import static blockchain.Database.getConnection;
+import static blockchain.Database.hashFile;
+import static blockchain.Database.insertEntry;
+import static blockchain.Proofs.proveAbsence;
 import static blockchain.Proofs.proveExtension;
 import static blockchain.Proofs.provePresence;
 import static blockchain.Proofs.writeJsonToFile;
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import org.json.simple.JSONObject;
 import org.junit.After;
@@ -657,7 +662,7 @@ public class ProofsTest {
 	}
 
 	
-
+	
 	@After
 	public void removeEntries(){
 		PreparedStatement del;

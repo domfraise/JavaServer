@@ -87,10 +87,12 @@ public class RequestQueue extends LinkedList<DecryptionRequest>{
 			proofsOfPresence.add(r.getProofOfPresence());
 			encFiles.add(r.getFile());
 		}
-		
+		//TODO
 		//send proofs
 		//recive decrypted files
 		//send to client
+		
+		this.clear();
 		
 	}
 	
