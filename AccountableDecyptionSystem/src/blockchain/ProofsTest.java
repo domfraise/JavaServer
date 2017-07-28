@@ -119,9 +119,12 @@ public class ProofsTest {
 			Database.insertEntry(conn, "5");
 			Database.insertEntry(conn, "6");
 			Database.insertEntry(conn, "7");
+			
 			Database.insertEntry(conn, "8");
 			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots ORDER BY size DESC LIMIT 1");
 			ResultSet root = getRoot.executeQuery(); root.next();
+			writeJsonToFile(provePresence(root.getString(1),7), "C:\\Users\\Dom\\Desktop\\presenceIndex7Size8.JSON");
+			
 			for(int i=0;i<8;i++){
 				System.out.println(provePresence(root.getString(1), i).toJSONString());
 
@@ -271,6 +274,7 @@ public class ProofsTest {
 				System.out.println(provePresence(root.getString(1), i).toJSONString());
 
 			}
+			
 			//			assertEquals("{\"Left\":{\"Left\":\"6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918\",\"Right\":{\"Left\":\"3\"}},\"Right\":\"7688b6ef52555962d008fff894223582c484517cea7da49ee67800adc7fc8866\"}",provePresence(root.getString(1), 3).toJSONString());
 			PreparedStatement del;
 
@@ -341,14 +345,14 @@ public class ProofsTest {
 
 			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 4 ORDER BY size DESC LIMIT 1");
 			ResultSet root = getRoot.executeQuery(); root.next();
-			String g = root.getString(1);
+			String g = "";
 
 			getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 6 ORDER BY size DESC LIMIT 1");
 			root = getRoot.executeQuery(); root.next();
 			String h = root.getString(1);
 			JSONObject proofs = proveExtension(conn, g, h);
 			System.out.println(proofs.toJSONString());
-
+			writeJsonToFile(proofs, "C:\\Users\\Dom\\Desktop\\extensionEmptyToSize6.JSON");
 			PreparedStatement del;
 
 			del = conn.prepareStatement("Delete FROM Tree");
@@ -413,14 +417,15 @@ public class ProofsTest {
 			Database.insertEntry(conn, "7");
 			Database.insertEntry(conn, "8");
 
-			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 1 ORDER BY size DESC LIMIT 1");
+			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 0 ORDER BY size DESC LIMIT 1");
 			ResultSet root = getRoot.executeQuery(); root.next();
 			String g = root.getString(1);
 
-			getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 7 ORDER BY size DESC LIMIT 1");
+			getRoot = conn.prepareStatement("SELECT * FROM roots Where size = 8 ORDER BY size DESC LIMIT 1");
 			root = getRoot.executeQuery(); root.next();
 			String h = root.getString(1);
 			JSONObject proofs = proveExtension(conn, g, h);
+			writeJsonToFile(proofs, "C:\\Users\\Dom\\Desktop\\extensionEmptyToSize8.JSON");
 			System.out.println(proofs.toJSONString());
 
 			PreparedStatement del;

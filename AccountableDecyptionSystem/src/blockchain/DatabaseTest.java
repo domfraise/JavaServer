@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.prefs.PreferenceChangeEvent;
 
 import static blockchain.Database.*;
@@ -350,13 +351,13 @@ public class DatabaseTest {
 	@Test
 	public void testGetRequest(){
 		try {
+			System.out.println(TreeOps.hash(""));
 			String[] actual = getRequest(conn, hashFile("C:\\Users\\Dom\\Documents\\myfile1.txt"));
 			String [] expected = new String[5];
 			expected[0] = "Google";
 			expected[1] = "dave";
 			expected[2] = hashFile("C:\\Users\\Dom\\Documents\\myfile1.txt");
 			expected[3] = "I think he's a terrorist";
-			
 			
 			for(int i=0;i<4;i++){
 				assertEquals(expected[i], actual[i]);
@@ -374,6 +375,19 @@ public class DatabaseTest {
 		}
 	}
 
+	@Test
+	public void testadminSearch(){
+		try {
+			ArrayList<String[]> actual = Database.adminSearch(conn, "domfraise", "2017-07-06","2017-07-06", "13:54","13:56");
+			for(String[] i: actual){
+				System.out.println((i[1]));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	
 	@After
 	public void removeEntries(){

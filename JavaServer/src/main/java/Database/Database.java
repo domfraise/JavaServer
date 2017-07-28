@@ -1,4 +1,4 @@
-package blockchain;
+package Database;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -446,39 +446,49 @@ public class Database {
 
 
 	public static ArrayList<String[]> adminSearch(Connection conn,String keyword,String startDate, String endDate, String startTime,String endTime) throws SQLException{
-		LocalDate start = LocalDate.of(Integer.parseInt(startDate.substring(0,4)), Integer.parseInt(startDate.substring(5,7)), Integer.parseInt(startDate.substring(8,10)));
-		LocalDate end = LocalDate.of(Integer.parseInt(endDate.substring(0,4)), Integer.parseInt(endDate.substring(5,7)), Integer.parseInt(endDate.substring(8,10)));
+		if(keyword == null && startDate ==null && endDate == null &&startTime == null&& endTime == null){
+			return new ArrayList<String[]>();
+		}
+		LocalDate start = LocalDate.of(Integer.parseInt(startDate.substring(6,10)), Integer.parseInt(startDate.substring(3,5)), Integer.parseInt(startDate.substring(0,2)));
+		LocalDate end = LocalDate.of(Integer.parseInt(endDate.substring(6,10)), Integer.parseInt(endDate.substring(3,5)), Integer.parseInt(endDate.substring(0,2)));
+
+		
 		LocalTime startT = LocalTime.of(Integer.parseInt(startTime.substring(0,2)), Integer.parseInt(startTime.substring(3,5)));
 		LocalTime endT = LocalTime.of(Integer.parseInt(endTime.substring(0,2)), Integer.parseInt(endTime.substring(3,5)));
 
-		PreparedStatement query = conn.prepareStatement("SELECT * FROM files WHERE owner = ? ");
-
+		PreparedStatement query = conn.prepareStatement("SELECT * FROM files WHERE owner LIKE ? ");
+		
 		query.setString(1, keyword);
 
 		ResultSet r = query.executeQuery();
 		ArrayList<String[]> result = new ArrayList<String[]>();
 		while(r.next()){
-
 			String timestamp = r.getTimestamp(4).toString();
+
 			LocalDate date = LocalDate.of(Integer.parseInt(timestamp.substring(0,4)), Integer.parseInt(timestamp.substring(5,7)), Integer.parseInt(timestamp.substring(8,10)));
 			LocalTime time = LocalTime.of(Integer.parseInt(timestamp.substring(11, 13)),Integer.parseInt(timestamp.substring(14, 16)));
 			if(date.isAfter(start) && date.isBefore(end)){
-				String[] line = new String[2];
+				String[] line = new String[3];
 				line[0] = r.getString(2);
 				line[1] = r.getString(4);
+				line[2] = r.getString(5);
 				result.add(line);
 			}else if(date.isEqual(start)){
 				if (time.isAfter(startT)){
-					String[] line = new String[2];
+					String[] line = new String[3];
 					line[0] = r.getString(2);
 					line[1] = r.getString(4);
+					line[2] = r.getString(5);
+
 					result.add(line);
 				}	
 			} else if(date.isEqual(end)){
 				if (time.isBefore(endT)){
-					String[] line = new String[2];
+					String[] line = new String[3];
 					line[0] = r.getString(2);
 					line[1] = r.getString(4);
+					line[2] = r.getString(5);
+
 					result.add(line);
 				}
 			}
