@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -19,18 +20,40 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.http.HttpStatus;
 
+import Database.DecryptionRequest;
+
 public class ServletDemo extends HttpServlet {
-	
+	Connection conn;
 	Set<String[]> basket = new HashSet<String[]>();
-	
+	Map<String,byte[]> decryptedFiles = new HashMap<String,byte[]>();
+
+	public void init() throws ServletException{
+		try {
+			conn = Database.Database.getConnection();
+		} catch (SQLException e) {
+			System.out.println("couldn't connect to  DB");
+			e.printStackTrace();
+		}
+	}
+
+	public void destroy(){
+		try {
+			conn.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
-	throws IOException{
+			throws IOException{
 		System.out.println(request.getServletPath());
 		response.setStatus(HttpStatus.OK_200);
 		if(request.getServletPath().equals("/") || request.getServletPath().equals("/adminSearch.html") ){
@@ -46,9 +69,33 @@ public class ServletDemo extends HttpServlet {
 		}else if(request.getServletPath().equals("/del")){
 			delFromBasket(request);
 			response.getWriter().println(viewBasket(request));
+		}else if(request.getServletPath().equals("/requestDec")){
+			requestDecryptions(request);
+			Scanner scanner = new Scanner(new File("adminSearch.html"));
+			response.getWriter().println(scanner.useDelimiter("\\A").next());
 		}
 	}
-	
+
+	public void requestDecryptions(HttpServletRequest r){
+		
+		try{
+			Set<DecryptionRequest> requests = new HashSet<DecryptionRequest>();
+			for(Iterator<String[]> i = basket.iterator();i.hasNext();){
+				String[] row = i.next();
+				DecryptionRequest req = new DecryptionRequest(conn, r.getParameter("company"), r.getParameter("name"), row[3], row[2]);
+				requests.add(req);
+				req.addToDatabase();
+				//TODO Generate proofs - send through rpc - Recieve back decrypted files
+				decryptedFiles.put(req.getFileHash(), req.getFile());//value need to be changed to decrypted file
+			}
+			
+		}catch (SQLException e) {
+			System.err.println("DB connection failed");
+			e.printStackTrace();
+			
+		}
+	}
+
 	/**
 	 * Removes a request that was added from the search page from the field variable basket
 	 * Triggered by clicking the delete button on basket.html
@@ -62,7 +109,7 @@ public class ServletDemo extends HttpServlet {
 			}
 		}
 	}
-	
+
 	/**
 	 * Displays the basket.html page with any items in the basket inserted into the table
 	 * @param r http request
@@ -74,17 +121,17 @@ public class ServletDemo extends HttpServlet {
 		String line;
 
 		Scanner scanner = new Scanner(new File("basket.html"));
-	
+
 		while(scanner.hasNextLine()){
 			line = scanner.useDelimiter(">").nextLine();
 			html = html.concat(line);
 			if(line.startsWith("<!--table-->")){
-				 html = html.concat(generateBasketTable(r));
+				html = html.concat(generateBasketTable(r));
 			}
 		}
 		return html;
 	}
-	
+
 	/**
 	 * Inserts each item in the basket into a html string to be inserted into the basket.html file
 	 * @param r http request
@@ -104,7 +151,7 @@ public class ServletDemo extends HttpServlet {
 		}
 		return html;
 	}
-	
+
 	/**
 	 * Adds a requests to the decryption basket from search page
 	 * @param r http request
@@ -112,7 +159,7 @@ public class ServletDemo extends HttpServlet {
 	 * @throws FileNotFoundException
 	 */
 	public String addToBasket(HttpServletRequest r) throws FileNotFoundException{
-//		System.out.println(r.getParameter("name0"));
+		//		System.out.println(r.getParameter("name0"));
 		Map<String,String[]> params = r.getParameterMap();
 		Set<Map.Entry<String, String[]>> entrySet = params.entrySet();
 		for(Map.Entry<String, String[]> entry: entrySet){
@@ -126,7 +173,7 @@ public class ServletDemo extends HttpServlet {
 				item[3] = params.get("hash"+index)[0];
 				basket.add(item);
 			}
-			
+
 		}
 		Scanner scanner = new Scanner(new File("adminSearch.html"));
 		String html  = "";
@@ -135,7 +182,7 @@ public class ServletDemo extends HttpServlet {
 			line = scanner.useDelimiter(">").nextLine();
 			html = html.concat(line);
 			if(line.startsWith("<body>")){
-				 html = html.concat("<script type=\"text/javascript\">alert( \"Item(s) added to basket \nGo to Decryption Basket to view\",\"stuff\" );</script>");
+				html = html.concat("<script type=\"text/javascript\">alert( \"Item(s) added to basket \nGo to Decryption Basket to view\",\"stuff\" );</script>");
 			}
 		}
 		for(String[] i:basket){
@@ -143,7 +190,7 @@ public class ServletDemo extends HttpServlet {
 		}
 		return html;
 	}
-	
+
 	/**
 	 * Generates search results and diplayes them in a table to be added to basket
 	 * @param r http request
@@ -155,28 +202,28 @@ public class ServletDemo extends HttpServlet {
 		String line;
 
 		Scanner scanner = new Scanner(new File("adminSearch.html"));
-	
+
 		while(scanner.hasNextLine()){
 			line = scanner.useDelimiter(">").nextLine();
 			html = html.concat(line);
 			if(line.startsWith("<!--table-->")){
-				 html = html.concat(generateSearchTable(r));
+				html = html.concat(generateSearchTable(r));
 			}
 		}
 		return html;
 	}
-	
+
 	/**
 	 * Generates tables with rows for each result from seach
 	 * @param request
 	 * @return String html table to be inserted into the htmlfile
 	 */
-	public static String generateSearchTable(HttpServletRequest request){
-		Connection conn = null;
+	public String generateSearchTable(HttpServletRequest request){
+
 		try {
-			conn = getConnection();
+
 			ArrayList<String[]> results = adminSearch(conn, request.getParameter("name"), request.getParameter("startDate"), request.getParameter("endDate"), request.getParameter("startTime"), request.getParameter("endTime"));
-			
+
 			String html = "<table class=\"table\">\r\n" + 
 					"  <thead>\r\n" + 
 					"    <tr>\r\n" + 
@@ -187,7 +234,7 @@ public class ServletDemo extends HttpServlet {
 					"    </tr>\r\n" + 
 					"  </thead>\r\n" + 
 					"  <tbody>";
-					//rows go here
+			//rows go here
 			String endHtml = "		"
 					+ ""
 					+ "<br>\r\n" + 
@@ -206,19 +253,19 @@ public class ServletDemo extends HttpServlet {
 					"			</div>\r\n" + 
 					"		\r\n" + 
 					"		</div></tbody></table>";
-		
+
 
 			for(int i = 0;i<results.size();i++)
 			{
 				String hiddenVars=
 						"			<input type=\"hidden\" name=\"name"+i+"\" value = \""+results.get(i)[0]+"\">" +
-						"			<input type=\"hidden\" name=\"timestamp"+i+"\" value = \""+results.get(i)[1]+"\">" +
-						"			<input type=\"hidden\" name=\"hash"+i+"\" value = \""+results.get(i)[2]+"\">" ;
+								"			<input type=\"hidden\" name=\"timestamp"+i+"\" value = \""+results.get(i)[1]+"\">" +
+								"			<input type=\"hidden\" name=\"hash"+i+"\" value = \""+results.get(i)[2]+"\">" ;
 				endHtml =endHtml.concat(hiddenVars);
 				html = html.concat(
 						"<tr>\r\n" + 
-						"			<td> "+results.get(i)[0]+"</td>\r\n" + 
-						"			<td>"+results.get(i)[1]+"</td>\r\n" + 
+								"			<td> "+results.get(i)[0]+"</td>\r\n" + 
+								"			<td>"+results.get(i)[1]+"</td>\r\n" + 
 
 
 						"			<td>\r\n" + 
@@ -236,20 +283,14 @@ public class ServletDemo extends HttpServlet {
 						"		\r\n" + 
 						"		</tr>");
 			}
-			
+
 			return html.concat(endHtml);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return "<b>Database access failed</b>";
-		}finally{
-			try {
-				conn.close();
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+
 		}
 	}
-	
-	
+
+
 }

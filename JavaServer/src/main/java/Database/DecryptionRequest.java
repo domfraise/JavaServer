@@ -32,6 +32,10 @@ public class DecryptionRequest {
 		this.file = Database.getFileBytes(conn, fileHash);
 		
 	}
+	/**
+	 * adds file hash and request hash to the blockchain
+	 * @throws SQLException
+	 */
 	public void addToDatabase() throws SQLException{
 		Database.insertEntry(conn, fileHash);
 		Database.insertRequest(conn,company, employee, fileHash, reason,timestamp);
@@ -129,4 +133,9 @@ public class DecryptionRequest {
 		return TreeOps.hash(company.concat(employee).concat(reason).concat(fileHash).concat(timestamp.toString()));
 	}
 	
+	@Override
+	public String toString() {
+		return "DecryptionRequest [company=" + company + ", employee=" + employee + ", fileHash=" + fileHash
+				+ ", reason=" + reason + ", timestamp=" + timestamp + "]";
+	}
 }

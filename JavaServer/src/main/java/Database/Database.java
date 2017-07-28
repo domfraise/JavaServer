@@ -446,7 +446,8 @@ public class Database {
 
 
 	public static ArrayList<String[]> adminSearch(Connection conn,String keyword,String startDate, String endDate, String startTime,String endTime) throws SQLException{
-		if(keyword == null && startDate ==null && endDate == null &&startTime == null&& endTime == null){
+		System.out.println("g"+keyword+"g");
+		if(keyword.equals("") || startDate.equals("") || endDate.equals("") ||startTime.equals("")||endTime.equals("")){
 			return new ArrayList<String[]>();
 		}
 		LocalDate start = LocalDate.of(Integer.parseInt(startDate.substring(6,10)), Integer.parseInt(startDate.substring(3,5)), Integer.parseInt(startDate.substring(0,2)));
