@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -25,28 +26,96 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.http.HttpStatus;
 
 public class ServletDemo extends HttpServlet {
+	
 	Set<String[]> basket = new HashSet<String[]>();
+	
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
 	throws IOException{
 		System.out.println(request.getServletPath());
 		response.setStatus(HttpStatus.OK_200);
-		if(request.getServletPath().equals("/")){
-			Scanner scanner = new Scanner(new File("C:\\Users\\Dom\\OneDrive\\Documents\\Bham CS\\Project\\HTMLFiles\\adminSearch.html"));
+		if(request.getServletPath().equals("/") || request.getServletPath().equals("/adminSearch.html") ){
+			Scanner scanner = new Scanner(new File("adminSearch.html"));
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
-		}else if(request.getServletPath().equals("/search")){
-			
+		}else if(request.getServletPath().equals("/basket.html")){
+			response.getWriter().println( viewBasket(request));
+		}
+		else if(request.getServletPath().equals("/search")){
 			response.getWriter().println(getSearchResults(request));
 		}else if(request.getServletPath().equals("/addToBasket")){
 			response.getWriter().println(addToBasket(request));
+		}else if(request.getServletPath().equals("/del")){
+			delFromBasket(request);
+			response.getWriter().println(viewBasket(request));
 		}
 	}
 	
+	/**
+	 * Removes a request that was added from the search page from the field variable basket
+	 * Triggered by clicking the delete button on basket.html
+	 * @param r the http request
+	 */
+	public void delFromBasket(HttpServletRequest r){
+		for(Iterator<String[]> i = basket.iterator();i.hasNext();){
+			String[] row  = i.next();
+			if(row[3].equals(r.getParameter("del"))){
+				i.remove();
+			}
+		}
+	}
+	
+	/**
+	 * Displays the basket.html page with any items in the basket inserted into the table
+	 * @param r http request
+	 * @return String the html file in a string to be written to the response writer
+	 * @throws FileNotFoundException
+	 */
+	public String viewBasket(HttpServletRequest r) throws FileNotFoundException{
+		String html  = "";
+		String line;
+
+		Scanner scanner = new Scanner(new File("basket.html"));
+	
+		while(scanner.hasNextLine()){
+			line = scanner.useDelimiter(">").nextLine();
+			html = html.concat(line);
+			if(line.startsWith("<!--table-->")){
+				 html = html.concat(generateBasketTable(r));
+			}
+		}
+		return html;
+	}
+	
+	/**
+	 * Inserts each item in the basket into a html string to be inserted into the basket.html file
+	 * @param r http request
+	 * @return String the html file in a string to be written to the response writer
+
+	 */
+	public String generateBasketTable(HttpServletRequest r){
+		String html = "";
+		for(String[] row:basket){
+			html=html.concat("					<tr>\r\n" + 
+					"						<td>"+row[0]+"</td>\r\n" + 
+					"						<td>"+row[1]+"</td>\r\n" + 
+					"						<td>"+row[2]+"</td>\r\n" + 
+					"						<td>"+row[3]+"</td>\r\n" + 
+					"						<td><button class=\"delete is-large\" name=\"del\" type=\"submit\" value="+row[3]+"></button></td>\r\n" + 
+					"					</tr>	");
+		}
+		return html;
+	}
+	
+	/**
+	 * Adds a requests to the decryption basket from search page
+	 * @param r http request
+	 * @return String html file adminSearch in a string. 
+	 * @throws FileNotFoundException
+	 */
 	public String addToBasket(HttpServletRequest r) throws FileNotFoundException{
 //		System.out.println(r.getParameter("name0"));
 		Map<String,String[]> params = r.getParameterMap();
 		Set<Map.Entry<String, String[]>> entrySet = params.entrySet();
 		for(Map.Entry<String, String[]> entry: entrySet){
-			System.out.println(entry.getKey()+" "+entry.getValue()[0]);
 			if(entry.getKey().substring(0,5).equals("added") && entry.getValue()[0].equals("on")){
 				String[] item = new String[4];
 				String index = entry.getKey().substring(5,6);
@@ -75,17 +144,23 @@ public class ServletDemo extends HttpServlet {
 		return html;
 	}
 	
+	/**
+	 * Generates search results and diplayes them in a table to be added to basket
+	 * @param r http request
+	 * @return String adminSearch.html in a string with search results inserted 
+	 * @throws IOException
+	 */
 	public String getSearchResults(HttpServletRequest r) throws IOException{
 		String html  = "";
 		String line;
 
-		Scanner scanner = new Scanner(new File("C:\\Users\\Dom\\OneDrive\\Documents\\Bham CS\\Project\\HTMLFiles\\adminSearch.html"));
+		Scanner scanner = new Scanner(new File("adminSearch.html"));
 	
 		while(scanner.hasNextLine()){
 			line = scanner.useDelimiter(">").nextLine();
 			html = html.concat(line);
 			if(line.startsWith("<!--table-->")){
-				 html = html.concat(generateTable(r));
+				 html = html.concat(generateSearchTable(r));
 			}
 		}
 		return html;
@@ -94,9 +169,9 @@ public class ServletDemo extends HttpServlet {
 	/**
 	 * Generates tables with rows for each result from seach
 	 * @param request
-	 * @return
+	 * @return String html table to be inserted into the htmlfile
 	 */
-	public static String generateTable(HttpServletRequest request){
+	public static String generateSearchTable(HttpServletRequest request){
 		Connection conn = null;
 		try {
 			conn = getConnection();
