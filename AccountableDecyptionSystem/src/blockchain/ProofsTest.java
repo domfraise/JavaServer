@@ -35,23 +35,17 @@ public class ProofsTest {
 	@Test
 	public void testProofPresence(){
 		try {
-			Database.insertEntry(conn, "1");
-			Database.insertEntry(conn, "2");
-			Database.insertEntry(conn, "3");
-			Database.insertEntry(conn, "4");
+	
 			PreparedStatement getRoot = conn.prepareStatement("SELECT * FROM roots ORDER BY size DESC LIMIT 1");
 			ResultSet root = getRoot.executeQuery(); root.next();
+			String proof = Proofs.provePresence("ff01e42d85d47d44f1f1247d6332c2a05ea8f0c8ee75ddfc1f8c284ee565b5d0", 0).toJSONString();
+			System.out.println(proof);
 
 			//			System.out.println(provePresence(root.getString(1), 3).toJSONString());
 			//			assertEquals("{\"Left\":\"6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918\",\"Right\":{\"Left\":\"3\"}}",provePresence(root.getString(1), 3).toJSONString());
 			PreparedStatement del;
 
-			del = conn.prepareStatement("Delete FROM Tree");
-			del.executeUpdate();
-			del = conn.prepareStatement("Delete FROM log");
-			del.executeUpdate();
-			del = conn.prepareStatement("Delete FROM roots");
-			del.executeUpdate();
+		
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -668,7 +662,7 @@ public class ProofsTest {
 
 	
 	
-	@After
+//	@After
 	public void removeEntries(){
 		PreparedStatement del;
 		try {

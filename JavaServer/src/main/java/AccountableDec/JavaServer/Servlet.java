@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.simple.JSONObject;
 
+import Database.Database;
 import Database.DecryptionRequest;
 import Database.Proofs;
 
@@ -43,7 +44,7 @@ public class Servlet extends HttpServlet {
 
 	public void init() throws ServletException{
 		try {
-			conn = Database.Database.getConnection();
+			conn = Database.getConnection();
 		} catch (SQLException e) {
 			System.out.println("couldn't connect to  DB");
 			e.printStackTrace();
@@ -59,6 +60,9 @@ public class Servlet extends HttpServlet {
 		}
 	}
 
+	/**
+	 * Handles all requests to the server, hanldes accordingly
+	 */
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws IOException{
 		System.out.println(request.getServletPath());
@@ -86,54 +90,106 @@ public class Servlet extends HttpServlet {
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
 		}else if(request.getServletPath().equals("/viewRequests")){
 			response.getWriter().println(viewDecryptions(request));
-
-		}else if (request.getServletPath().equals("/downloadProof")){
-			response = downloadProof(request, response);
+		}else if (request.getServletPath().equals("/proofsInfo")){
+			scanner = new Scanner(new File("proofsInfo.html"));
+			response.getWriter().println(scanner.useDelimiter("\\A").next());
+		}else if (request.getServletPath().equals("/getProofPresence")){
+			response.getWriter().println(getProofPresence(request));
+		}else if (request.getServletPath().equals("/proofsPresence")){
+			scanner = new Scanner(new File("proofsPresence.html"));
+			response.getWriter().println(scanner.useDelimiter("\\A").next());
 		}
 
 		//		scanner.close();
 	}
 
-	public HttpServletResponse downloadProof(HttpServletRequest request,HttpServletResponse response) throws IOException{
-		File file = new File("C:\\Users\\Dom\\Documents\\someproof.json");
-		FileInputStream fileIn = new FileInputStream(file);
-		ServletOutputStream out = response.getOutputStream();
 
-		byte[] outputByte = new byte[4096];
-		//copy binary contect to output stream
-		while(fileIn.read(outputByte, 0, 4096) != -1)
-		{
-			out.write(outputByte, 0, 4096);
-		}
-		fileIn.close();
-//		out.flush();
-		out.close();
-	   
-		return response;
-	}
-	
-	public void generateProofFile(HttpServletRequest r){
+	public String getProofPresence(HttpServletRequest r) throws FileNotFoundException{
+		String html  = "";
+		String line;
+		String user = r.getParameter("name");
+		try{
+			int index = Database.getIndex(conn, r.getParameter("leaf"));
+			String proof = Proofs.provePresence(r.getParameter("RTH"),index).toJSONString();
+			//		generateProofFile(r);
+			Scanner scanner = new Scanner(new File("proofsPresence.html"));
 
-		JSONObject proof;
-		try {
-			proof = Database.Proofs.proveAbsence(conn, r.getParameter("name"));
-			System.out.println(proof.toJSONString());
-//			Database.Proofs.writeJsonToFile(proof, r.getParameter("name")+".json");
-			Database.Proofs.writeJsonToFile(proof,"someproof2.txt");
+			while(scanner.hasNextLine()){
+				line = scanner.useDelimiter(">").nextLine();
+				html = html.concat(line);
 
-
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+				if(line.contains("<!-- proof -->")){
+					//				html = html.concat("	<a href=\"someproof.json\" download >Download Proof</a>");
+					html = html.concat("<div class=\"field\">\r\n" + 
+							"  <div class=\"control\">\r\n" + 
+							"    <textarea class=\"textarea is-primary\" type=\"text\" >"+proof+"</textarea>\r\n" + 
+							"  </div>\r\n" + 
+							"</div>");
+				}
+			}
+		}catch(SQLException e){
 			e.printStackTrace();
+		}catch(NullPointerException ex){
+			Scanner scanner = new Scanner(new File("proofsPresence.html"));
+
+			while(scanner.hasNextLine()){
+				line = scanner.useDelimiter(">").nextLine();
+				html = html.concat(line);
+
+				if(line.contains("<!-- proof -->")){
+					//				html = html.concat("	<a href=\"someproof.json\" download >Download Proof</a>");
+					html = html.concat("<div class=\"field\">\r\n" + 
+							"  <div class=\"control\">\r\n" + 
+							"    <textarea class=\"textarea is-primary\" type=\"text\" >Proof Generation Failed - Leaf not found in tree with the given RTH. "
+							+ "Check your RTH is a current or past hash. If in doubt use the hash"
+							+ "provided by the device.</textarea>\r\n" + 
+							"  </div>\r\n" + 
+							"</div>");
+				}
+			}
 		}
-
-
+		return html;
 	}
+	//	public HttpServletResponse downloadProof(HttpServletRequest request,HttpServletResponse response) throws IOException{
+	//		File file = new File("C:\\Users\\Dom\\Documents\\someproof.json");
+	//		FileInputStream fileIn = new FileInputStream(file);
+	//		ServletOutputStream out = response.getOutputStream();
+	//
+	//		byte[] outputByte = new byte[4096];
+	//		//copy binary contect to output stream
+	//		while(fileIn.read(outputByte, 0, 4096) != -1)
+	//		{
+	//			out.write(outputByte, 0, 4096);
+	//		}
+	//		fileIn.close();
+	////		out.flush();
+	//		out.close();
+	//	   
+	//		return response;
+	//	}
+
+	//	public void generateProofFile(HttpServletRequest r){
+	//
+	//		JSONObject proof;
+	//		try {
+	//			proof = Database.Proofs.proveAbsence(conn, r.getParameter("name"));
+	//			System.out.println(proof.toJSONString());
+	////			Database.Proofs.writeJsonToFile(proof, r.getParameter("name")+".json");
+	//			Database.Proofs.writeJsonToFile(proof,"someproof2.txt");
+	//
+	//
+	//		} catch (SQLException e) {
+	//			// TODO Auto-generated catch block
+	//			e.printStackTrace();
+	//		}
+	//
+	//
+	//	}
 	public String viewDecryptions(HttpServletRequest r) throws FileNotFoundException{
 		String html  = "";
 		String line;
 		String user = r.getParameter("name");
-		generateProofFile(r);
+		//		generateProofFile(r);
 		Scanner scanner = new Scanner(new File("userInspection.html"));
 
 		while(scanner.hasNextLine()){
@@ -146,16 +202,7 @@ public class Servlet extends HttpServlet {
 					html="";
 					e.printStackTrace();
 				}
-			}if(line.contains("<!-- proof -->")){
-//				html = html.concat("	<a href=\"someproof.json\" download >Download Proof</a>");
-				html = html.concat("		<form action=downloadProof><button class=\"button is-primary\"  type=\"submit\">\r\n" + 
-						"				DownloadProof\r\n" + 
-						"				</button></form>");
-
 			}
-
-
-
 		}
 		return html;
 	}

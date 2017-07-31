@@ -60,6 +60,52 @@ public class Proofs {
 			conn.close();
 		}
 	}
+	
+	/**
+	 * Calls a recusive method to get a JSON tree containing the proof of presence for an elemnt in a tree
+	 * @param rth String The root tree hash of the tree to be checked
+	 * @param i the index of the entry in the log
+	 * @return JSONObject A tree with hash values and positions of the proof nodes in the tree
+	 * @throws SQLException Thrown in cannot connect to the database
+	 */
+	public static JSONObject provePresence(String rth,String leaf_value) throws SQLException{
+		Connection conn = Database.getConnection();
+//		PreparedStatement getLeaf = conn.prepareStatement("SELECT * FROM log WHERE index = ?");
+//		getLeaf.setInt(1, i);
+//		ResultSet leaf = getLeaf.executeQuery();
+//		if(!leaf.isBeforeFirst()){
+//			System.out.println("No entry found in the log at index "+i);
+//			return null;
+//		}
+//		leaf.next();
+//		String leaf_value = leaf.getString(1);
+		int i = Database.getIndex(conn, leaf_value);
+		PreparedStatement getNode = conn.prepareStatement("SELECT * FROM roots WHERE RTH LIKE ? ");
+		getNode.setString(1, rth);
+		ResultSet node = getNode.executeQuery();
+		if(!node.isBeforeFirst()){
+			System.out.println("No root with value "+rth+" found");
+			return null;
+		}
+		node.next();
+		try{
+			JSONObject proofTree =  provePresenceRec(conn, rth, leaf_value, i, 0,node.getInt(4));
+			JSONObject proofFile = new JSONObject();
+			proofFile.put("RTH", rth);
+			proofFile.put("Index", i);
+			proofFile.put("Value", leaf_value);
+			proofFile.put("Proof", proofTree);
+			return proofFile;
+		}catch(NullPointerException e){
+			return null;
+		}
+		catch(SQLException e){
+			return null;
+		}
+		finally{
+			conn.close();
+		}
+	}
 
 
 
