@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<title>Search</title>
+
+
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.4.3/css/bulma.css">
+</head>
+
+<body>
+
+
+	<section class="hero is-primary">
+		<div class="hero-body">
+			<div class="container" align="center">
+				<h1 class="title">Inspect</h1>
+				<br>
+				<h2 class="subtitle">View all decryption requests of your files</h2>
+			</div>
+		</div>
+	</section>
+	<br>
+
+
+	<div class="columns">
+		<div class="column">
+
+			<aside class="menu">
+				<p class="menu-label">General</p>
+				<ul class="menu-list">
+					<li><a>Home</a></li>
+					<li><a>Inspect</a></li>
+					<li><a>Graphical</a></li>
+				</ul>
+			</aside>
+		</div>
+		<div class="column">
+			<form action="viewRequests">
+				<div class="control" align="center">
+					<label class="label">Enter Your Username</label> <input
+						class="input" type="text" name="name" placeholder="e.g. JaneSmith">
+				</div>
+				<button class="button is-primary"  type="submit">
+				View Requests
+				</button>
+			</form>
+		
+			<!-- proof -->
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Requester</th>
+						<th>Company</th>
+						<th>Timestamp</th>
+						<th>Justification</th>
+						<th>FileHash</th>
+					</tr>
+				</thead>
+				<tbody>
+<!--table-->
+				</tbody>
+			</table>
+		</div>
+		<div class="column"></div>
+	</div>

@@ -15,7 +15,7 @@ public class JavaServer {
     public static void main( String[] args ) throws Exception{
     	Server server = new Server(8080);
     	ServletContextHandler handler = new ServletContextHandler(server, "/");
-    	handler.addServlet(ServletDemo.class, "/");
+    	handler.addServlet(Servlet.class, "/");
     	server.start();
     	server.join();
     }

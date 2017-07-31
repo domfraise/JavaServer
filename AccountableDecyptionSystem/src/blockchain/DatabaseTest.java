@@ -249,15 +249,15 @@ public class DatabaseTest {
 	}
 
 
-//	@Test
+	@Test
 	public void insertFiles(){
 		String user = "domfraise";
 		try {
-			insertFileAsPath(conn, user, "C:\\Users\\Dom\\Documents\\myfile1.txt");
+//			insertFileAsPath(conn, user, "C:\\Users\\Dom\\Documents\\myfile1.txt");
 			insertFileAsPath(conn, user, "C:\\Users\\Dom\\Documents\\myfile2.txt");
 			insertFileAsPath(conn, user, "C:\\Users\\Dom\\Documents\\myfile3.txt");
-			insertFileAsPath(conn, user, "C:\\Users\\Dom\\Documents\\myfile4.txt");
-			insertFileAsPath(conn, user, "C:\\Users\\Dom\\Documents\\myfile5.txt");
+//			insertFileAsPath(conn, user, "C:\\Users\\Dom\\Documents\\myfile4.txt");
+//			insertFileAsPath(conn, user, "C:\\Users\\Dom\\Documents\\myfile5.txt");
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -297,7 +297,7 @@ public class DatabaseTest {
 	}
 	
 	@Test
-	public void testGetLeaves(){
+	public void slelc(){
 		try {
 			Database.insertEntry(conn, "1");
 			Database.insertEntry(conn, "2");
@@ -398,6 +398,8 @@ public class DatabaseTest {
 			del = conn.prepareStatement("Delete FROM log");
 			del.executeUpdate();
 			del = conn.prepareStatement("Delete FROM roots");
+			del.executeUpdate();
+			del = conn.prepareStatement("Delete FROM requests");
 			del.executeUpdate();
 
 		} catch (SQLException e) {

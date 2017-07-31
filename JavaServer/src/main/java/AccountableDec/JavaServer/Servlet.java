@@ -4,8 +4,11 @@ import static Database.Database.adminSearch;
 import static Database.Database.getConnection;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -20,16 +23,20 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.http.HttpStatus;
+import org.json.simple.JSONObject;
 
 import Database.DecryptionRequest;
+import Database.Proofs;
 
-public class ServletDemo extends HttpServlet {
+public class Servlet extends HttpServlet {
 	Connection conn;
 	Set<String[]> basket = new HashSet<String[]>();
 	Map<String,byte[]> decryptedFiles = new HashMap<String,byte[]>();
@@ -56,8 +63,9 @@ public class ServletDemo extends HttpServlet {
 			throws IOException{
 		System.out.println(request.getServletPath());
 		response.setStatus(HttpStatus.OK_200);
+		Scanner scanner = null;
 		if(request.getServletPath().equals("/") || request.getServletPath().equals("/adminSearch.html") ){
-			Scanner scanner = new Scanner(new File("adminSearch.html"));
+			scanner = new Scanner(new File("adminSearch.html"));
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
 		}else if(request.getServletPath().equals("/basket.html")){
 			response.getWriter().println( viewBasket(request));
@@ -71,13 +79,106 @@ public class ServletDemo extends HttpServlet {
 			response.getWriter().println(viewBasket(request));
 		}else if(request.getServletPath().equals("/requestDec")){
 			requestDecryptions(request);
-			Scanner scanner = new Scanner(new File("adminSearch.html"));
+			scanner = new Scanner(new File("adminSearch.html"));
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
+		}else if(request.getServletPath().equals("/userInspection")){
+			scanner = new Scanner(new File("userInspection.html"));
+			response.getWriter().println(scanner.useDelimiter("\\A").next());
+		}else if(request.getServletPath().equals("/viewRequests")){
+			response.getWriter().println(viewDecryptions(request));
+
+		}else if (request.getServletPath().equals("/downloadProof")){
+			response = downloadProof(request, response);
 		}
+
+		//		scanner.close();
+	}
+
+	public HttpServletResponse downloadProof(HttpServletRequest request,HttpServletResponse response) throws IOException{
+		File file = new File("C:\\Users\\Dom\\Documents\\someproof.json");
+		FileInputStream fileIn = new FileInputStream(file);
+		ServletOutputStream out = response.getOutputStream();
+
+		byte[] outputByte = new byte[4096];
+		//copy binary contect to output stream
+		while(fileIn.read(outputByte, 0, 4096) != -1)
+		{
+			out.write(outputByte, 0, 4096);
+		}
+		fileIn.close();
+//		out.flush();
+		out.close();
+	   
+		return response;
+	}
+	
+	public void generateProofFile(HttpServletRequest r){
+
+		JSONObject proof;
+		try {
+			proof = Database.Proofs.proveAbsence(conn, r.getParameter("name"));
+			System.out.println(proof.toJSONString());
+//			Database.Proofs.writeJsonToFile(proof, r.getParameter("name")+".json");
+			Database.Proofs.writeJsonToFile(proof,"someproof2.txt");
+
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+
+	}
+	public String viewDecryptions(HttpServletRequest r) throws FileNotFoundException{
+		String html  = "";
+		String line;
+		String user = r.getParameter("name");
+		generateProofFile(r);
+		Scanner scanner = new Scanner(new File("userInspection.html"));
+
+		while(scanner.hasNextLine()){
+			line = scanner.useDelimiter(">").nextLine();
+			html = html.concat(line);
+			if(line.contains("<!--table-->")){
+				try{
+					html = html.concat(generateInspectionTable(r));
+				}catch (SQLException e) {
+					html="";
+					e.printStackTrace();
+				}
+			}if(line.contains("<!-- proof -->")){
+//				html = html.concat("	<a href=\"someproof.json\" download >Download Proof</a>");
+				html = html.concat("		<form action=downloadProof><button class=\"button is-primary\"  type=\"submit\">\r\n" + 
+						"				DownloadProof\r\n" + 
+						"				</button></form>");
+
+			}
+
+
+
+		}
+		return html;
+	}
+
+	public String generateInspectionTable(HttpServletRequest r) throws SQLException{
+		ArrayList<String[]> requests = Proofs.getRequests(conn, r.getParameter("name"));
+		String html = "";int i = 0;
+		for(String[] row:requests){
+			System.out.println(i);
+
+			html=html.concat("					<tr>\r\n" + 
+					"						<td>"+row[1]+"</td>\r\n" + 
+					"						<td>"+row[0]+"</td>\r\n" + 
+					"						<td>"+row[4]+"</td>\r\n" + 
+					"						<td>"+row[3]+"</td>\r\n" + 
+					"						<td>"+row[2]+" </td>\r\n "+
+					"					</tr>	");
+		}
+		return html;
 	}
 
 	public void requestDecryptions(HttpServletRequest r){
-		
+
 		try{
 			Set<DecryptionRequest> requests = new HashSet<DecryptionRequest>();
 			for(Iterator<String[]> i = basket.iterator();i.hasNext();){
@@ -88,11 +189,11 @@ public class ServletDemo extends HttpServlet {
 				//TODO Generate proofs - send through rpc - Recieve back decrypted files
 				decryptedFiles.put(req.getFileHash(), req.getFile());//value need to be changed to decrypted file
 			}
-			
+
 		}catch (SQLException e) {
 			System.err.println("DB connection failed");
 			e.printStackTrace();
-			
+
 		}
 	}
 

@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import static Database.Database.getPowOf2;
+
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 public class Proofs {
@@ -262,7 +264,7 @@ public class Proofs {
 	 * each entry has this format [company,employee,hash of file,reason,timestamp of request]
 	 * @throws SQLException
 	 */
-	public static ArrayList<String[]> proveAbsence(Connection conn,String user) throws SQLException{
+	public static ArrayList<String[]> getRequests(Connection conn,String user) throws SQLException{
 		ArrayList<String> leaves = Database.getLeaves(conn);
 		String root = Database.getRoot(conn);
 		Tree tree = new Tree();
@@ -275,6 +277,7 @@ public class Proofs {
 		}
 		
 		ArrayList<String> myFiles = Database.getMyFiles(conn, user);
+		System.out.println(myFiles.size());
 		ArrayList<String> hits = new ArrayList<String>();
 		for(String i: myFiles){
 			if(leaves.contains(i)){
@@ -288,6 +291,30 @@ public class Proofs {
 			requests.add(request);
 		}
 		return requests;
+	}
+	
+	/**
+	 * generates a json object for a user to verify absence them selves
+	 * @param conn
+	 * @param user
+	 * @return
+	 * @throws SQLException
+	 */
+	public static JSONObject proveAbsence(Connection conn,String user) throws SQLException{
+		JSONObject container = new JSONObject();
+		container.put("RTHFromDevice", Database.getRoot(conn));//TODO change to the authenic rth value
+		container.put("SignatureFromDevice", "SomeSigGoesHere");
+		JSONArray leaves = new JSONArray();
+		for(String i: Database.getLeaves(conn)){
+			leaves.add(i);
+		}
+		container.put("leaves", leaves);
+		JSONArray files = new JSONArray();
+		for(String i: Database.getMyFiles(conn, user)){
+			files.add(i);
+		}
+		container.put("fileHashes", files);
+		return container;
 	}
 	
 	/**

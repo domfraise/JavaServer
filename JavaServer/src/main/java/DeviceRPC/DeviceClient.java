@@ -51,29 +51,30 @@ public class DeviceClient {
 	 * Blocking unary call example.  Calls getFeature and prints the response.
 	 */
 	public void getKey() {
-		PublicKeyRequest keyRequest = PublicKeyRequest.getDefaultInstance();
-		ByteString.copyFromUtf8("gfdgdg");
-		keyRequest.toBuilder().setNonce(ByteString.copyFromUtf8("gfdgdg")).build();
+		PublicKeyRequest keyRequest = PublicKeyRequest.newBuilder().setNonce(ByteString.copyFromUtf8("gfdgdg")).build();
+		Quote quote =  Quote.newBuilder().build();
+		ByteString s = quote.getRSAEncryptionKey();
+		System.out.println(s);
+		
+		
 //		DecryptionDeviceProto.(request)
 	   
-	  
-	  try {
-	      String[] requests =
-	          {"First message","Second message",
-	             "Third message", "Fourth message"};
-
-	      for (String request : requests) {
-	        info("Sending message \"{0}\" at {1}, {2}", request);
-	        
-	      }
-	    } catch (RuntimeException e) {
-	      // Cancel RPC
-//	      requestObserver.onError(e);
-	      throw e;
+		 logger.info("Will try to get Key ...");
+		    PublicKeyRequest request = PublicKeyRequest.newBuilder().setNonce(ByteString.copyFromUtf8("nonce")).build();
+		    Quote response = Quote.newBuilder().build();
+		    ByteString key = response.getQuoteBytes();
+		    System.out.println(key);
+//		    try {
+//		      response = blockingStub.sayHello(request);
+//		    } catch (StatusRuntimeException e) {
+//		      logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
+//		      return;
+//		    }
+//		    logger.info("Greeting: " + response.getMessage());
 	}
 
 
-	}
+	
 
 
 
