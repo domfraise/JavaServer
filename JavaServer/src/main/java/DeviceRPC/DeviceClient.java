@@ -52,15 +52,22 @@ public class DeviceClient {
 	 */
 	public void getKey() {
 		PublicKeyRequest keyRequest = PublicKeyRequest.newBuilder().setNonce(ByteString.copyFromUtf8("gfdgdg")).build();
+//		Quote resonse = newBlockingStub(channel).getKey();
+		
+		
+		
+		
 		Quote quote =  Quote.newBuilder().build();
 		ByteString s = quote.getRSAEncryptionKey();
 		System.out.println(s);
+//		DecryptionDeviceProto.Stub(channel);
 		
 		
 //		DecryptionDeviceProto.(request)
 	   
 		 logger.info("Will try to get Key ...");
 		    PublicKeyRequest request = PublicKeyRequest.newBuilder().setNonce(ByteString.copyFromUtf8("nonce")).build();
+		    PublicKeyRequest.Builder r = PublicKeyRequest.newBuilder();
 		    Quote response = Quote.newBuilder().build();
 		    ByteString key = response.getQuoteBytes();
 		    System.out.println(key);
