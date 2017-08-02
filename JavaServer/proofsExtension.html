@@ -30,10 +30,10 @@
 			<ul>
 				<li><a href=proofsInfo> <span>Information</span>
 				</a></li>
-				<li class="is-active"><a href="proofsPresence"> <span>Proof
-							of Presence</span>
+				<li><a href="proofsPresence"> <span>Proof of
+							Presence</span>
 				</a></li>
-				<li><a href="proofsExtension"> <span>Proof of
+				<li class="is-active"><a href="proofsExtension"> <span>Proof of
 							Extension</span>
 				</a></li>
 				<li><a href="proofsExtension"> <span>Proof of
@@ -54,44 +54,45 @@
 				</aside>
 			</div>
 			<div class="column is-two-thirds">
-				<form action=getProofPresence>
+			<form action=getProofExtension>
 					<div class="control" align="center">
-						<label class="label">Enter a SHA256 leaf hash</label> <input
-							class="input" type="text" name="leaf"
+						<label class="label">Enter The Older RTH</label> <input
+							class="input" type="text" id="old" name="old"
 							placeholder="e.g. ae3429272efe63b78fa8d9a5c36a5164522a66146089487dd1a7a4b48798627f">
 					</div>
 					<div class="control" align="center">
-						<label class="label">Enter a RTH</label> <input class="input"
-							type="text" name="RTH"
+						<label class="label">Enter The Newer RTH</label> <input class="input"
+							type="text" name="new" id="new"
 							placeholder="e.g. ae3429272efe63b78fa8d9a5c36a5164522a66146089487dd1a7a4b48798627f">
 					</div>
-					<button class="button is-primary" type="submit">Get Proof</button>
+					<button class="button is-primary" type="submit" formnovalidate old="cancel" new="cancel">Get Proof</button>
 				</form>
+		
 				<br>
 				<!-- proof -->
 				<br>
-				<h1 class="title">Proof Of Presence Format</h1>
+				<h1 class="title">Proof Of Extension Format</h1>
 				<h2 class="subtitle">Top level objects:</h2>
 				<ol>
-					<li><code> RTH type:String //The root tree hash of the
-							tree that generated the proof</code></li>
-					<li><code> Value type:String //The leaf hash value of
-							the leaf that the proof was generated for</code></li>
-					<li><code> Index type:String //The index that the leaf is stored at. Starts counting from zero, left to right</code></li>
-					<li><code> Proof type:JSONObject //A JSON tree
-							containing the proof</code></li>
+				<li>
+				<code> OldRTH type:String //The root tree hash of intial, older tree</code>
+				</li>
+				<li>
+				<code> NewRTH type:String //The root tree hash of newer tree to be proven to be an append only version of OldRTH tree</code>
+				</li>
+				<li>
+				<code> OldProof type:JSONObject //A JSON tree containing the tree that should recreate OldRTH</code>
+				</li>
+				<li>
+				<code> NewProof type:JSONObject //A JSON tree containing the tree that should recreate NewRTH</code>
+				</li>
 				</ol>
-
+				
 				<br>
-				<h2 class="subtitle">JSON Tree</h2>
+								<h2 class="subtitle">JSON Tree</h2>
 
-				Each node contains either
-				<code>Left type:JSONObject and Right type:JSONObject</code>
-				or
-				<code>Leaf type:String //the leaf value proved to be present</code>
-				or
-				<code>Hash type:String //An intermediate node value used to
-					recreate RTH</code>
+				Each node contains either <code>Left type:JSONObject and Right type:JSONObject</code> or 
+				<code>Hash type:String //An intermediate node value used to recreate RTH</code>
 			</div>
 			<div class="column"></div>
 		</div>

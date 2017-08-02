@@ -68,13 +68,15 @@ public class Servlet extends HttpServlet {
 		System.out.println(request.getServletPath());
 		response.setStatus(HttpStatus.OK_200);
 		Scanner scanner = null;
-		if(request.getServletPath().equals("/") || request.getServletPath().equals("/adminSearch.html") ){
+		if(request.getServletPath().equals("/") ){
+			scanner = new Scanner(new File("index.html"));
+			response.getWriter().println(scanner.useDelimiter("\\A").next());
+		}else if(request.getServletPath().equals("/searchPage")){
 			scanner = new Scanner(new File("adminSearch.html"));
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
 		}else if(request.getServletPath().equals("/basket.html")){
 			response.getWriter().println( viewBasket(request));
-		}
-		else if(request.getServletPath().equals("/search")){
+		}else if(request.getServletPath().equals("/search")){
 			response.getWriter().println(getSearchResults(request));
 		}else if(request.getServletPath().equals("/addToBasket")){
 			response.getWriter().println(addToBasket(request));
@@ -98,12 +100,74 @@ public class Servlet extends HttpServlet {
 		}else if (request.getServletPath().equals("/proofsPresence")){
 			scanner = new Scanner(new File("proofsPresence.html"));
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
+		}else if (request.getServletPath().equals("/proofsExtension")){
+			scanner = new Scanner(new File("proofsExtension.html"));
+			response.getWriter().println(scanner.useDelimiter("\\A").next());
+		}
+		else if (request.getServletPath().equals("/getProofExtension")){
+			response.getWriter().println(getProofExtension(request));
+
 		}
 
 		//		scanner.close();
 	}
+	/**
+	 * Generates proof of Extesnion from the input and places it in a text area inside proofsExtesnion.html
+	 * @param r HttpServletRequest
+	 * @return Full html of page to be displayed
+	 * @throws FileNotFoundException
+	 * */
+	public String getProofExtension(HttpServletRequest r) throws FileNotFoundException{
+		String html  = "";
+		String line;
+		String user = r.getParameter("name");
+		try{
+			String proof = Proofs.proveExtension(conn, r.getParameter("old"),r.getParameter("new")).toJSONString();
+			//		generateProofFile(r);
+			Scanner scanner = new Scanner(new File("proofsExtension.html"));
 
+			while(scanner.hasNextLine()){
+				line = scanner.useDelimiter(">").nextLine();
+				html = html.concat(line);
 
+				if(line.contains("<!-- proof -->")){
+					//				html = html.concat("	<a href=\"someproof.json\" download >Download Proof</a>");
+					html = html.concat("<div class=\"field\">\r\n" + 
+							"  <div class=\"control\">\r\n" + 
+							"    <textarea class=\"textarea is-primary\" type=\"text\" >"+proof+"</textarea>\r\n" + 
+							"  </div>\r\n" + 
+							"</div>");
+				}
+			}
+		}catch(SQLException e){
+			e.printStackTrace();
+		}catch(NullPointerException ex){
+			Scanner scanner = new Scanner(new File("proofsExtension.html"));
+
+			while(scanner.hasNextLine()){
+				line = scanner.useDelimiter(">").nextLine();
+				html = html.concat(line);
+
+				if(line.contains("<!-- proof -->")){
+					//				html = html.concat("	<a href=\"someproof.json\" download >Download Proof</a>");
+					html = html.concat("<div class=\"field\">\r\n" + 
+							"  <div class=\"control\">\r\n" + 
+							"    <textarea class=\"textarea is-danger\" type=\"text\" >Proof Generation Failed - NewRTH is not an append only extesnion of OldRTH"
+							+ "\nCheck you have put the correct RTH in the correct area.</textarea>\r\n" + 
+							"  </div>\r\n" + 
+							"</div>");
+				}
+			}
+		}
+		return html;
+	}
+
+	/**
+	 * Generates proof of presence from the input and places it in a text area inside proofsPresecnce.html
+	 * @param r HttpServletRequest
+	 * @return Full html of page to be displayed
+	 * @throws FileNotFoundException
+	 */
 	public String getProofPresence(HttpServletRequest r) throws FileNotFoundException{
 		String html  = "";
 		String line;
@@ -140,7 +204,7 @@ public class Servlet extends HttpServlet {
 					//				html = html.concat("	<a href=\"someproof.json\" download >Download Proof</a>");
 					html = html.concat("<div class=\"field\">\r\n" + 
 							"  <div class=\"control\">\r\n" + 
-							"    <textarea class=\"textarea is-primary\" type=\"text\" >Proof Generation Failed - Leaf not found in tree with the given RTH. "
+							"    <textarea class=\"textarea is-danger\" type=\"text\" >Proof Generation Failed - Leaf not found in tree with the given RTH. "
 							+ "Check your RTH is a current or past hash. If in doubt use the hash"
 							+ "provided by the device.</textarea>\r\n" + 
 							"  </div>\r\n" + 
@@ -150,41 +214,13 @@ public class Servlet extends HttpServlet {
 		}
 		return html;
 	}
-	//	public HttpServletResponse downloadProof(HttpServletRequest request,HttpServletResponse response) throws IOException{
-	//		File file = new File("C:\\Users\\Dom\\Documents\\someproof.json");
-	//		FileInputStream fileIn = new FileInputStream(file);
-	//		ServletOutputStream out = response.getOutputStream();
-	//
-	//		byte[] outputByte = new byte[4096];
-	//		//copy binary contect to output stream
-	//		while(fileIn.read(outputByte, 0, 4096) != -1)
-	//		{
-	//			out.write(outputByte, 0, 4096);
-	//		}
-	//		fileIn.close();
-	////		out.flush();
-	//		out.close();
-	//	   
-	//		return response;
-	//	}
 
-	//	public void generateProofFile(HttpServletRequest r){
-	//
-	//		JSONObject proof;
-	//		try {
-	//			proof = Database.Proofs.proveAbsence(conn, r.getParameter("name"));
-	//			System.out.println(proof.toJSONString());
-	////			Database.Proofs.writeJsonToFile(proof, r.getParameter("name")+".json");
-	//			Database.Proofs.writeJsonToFile(proof,"someproof2.txt");
-	//
-	//
-	//		} catch (SQLException e) {
-	//			// TODO Auto-generated catch block
-	//			e.printStackTrace();
-	//		}
-	//
-	//
-	//	}
+	/**
+	 * Displays all decryption requests for a given user specified in the request
+	 * @param r http request
+	 * @return html of userInspection.html with all requests inserted in table form
+	 * @throws FileNotFoundException
+	 */
 	public String viewDecryptions(HttpServletRequest r) throws FileNotFoundException{
 		String html  = "";
 		String line;
@@ -207,7 +243,13 @@ public class Servlet extends HttpServlet {
 		return html;
 	}
 
-	public String generateInspectionTable(HttpServletRequest r) throws SQLException{
+	/**
+	 * Generates the table with all decryption requests for a given user - used by viewDecryptions
+	 * @param r
+	 * @return html snippet containing n table rows
+	 * @throws SQLException
+	 */
+	private String generateInspectionTable(HttpServletRequest r) throws SQLException{
 		ArrayList<String[]> requests = Proofs.getRequests(conn, r.getParameter("name"));
 		String html = "";int i = 0;
 		for(String[] row:requests){
@@ -224,8 +266,11 @@ public class Servlet extends HttpServlet {
 		return html;
 	}
 
+	/**
+	 * Triggered when checking out the decryption basket. All requests are added to the log and decrpytions requested to device **
+	 * @param r http request
+	 */
 	public void requestDecryptions(HttpServletRequest r){
-
 		try{
 			Set<DecryptionRequest> requests = new HashSet<DecryptionRequest>();
 			for(Iterator<String[]> i = basket.iterator();i.hasNext();){
