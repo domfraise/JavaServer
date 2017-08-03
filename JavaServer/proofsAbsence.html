@@ -30,13 +30,14 @@
 			<ul>
 				<li><a href=proofsInfo> <span>Information</span>
 				</a></li>
-				<li class="is-active"><a href="proofsPresence"> <span>Proof
-							of Presence</span>
+				<li><a href="proofsPresence"> <span>Proof of
+							Presence</span>
 				</a></li>
 				<li><a href="proofsExtension"> <span>Proof of
 							Extension</span>
 				</a></li>
-				<li><a href="proofsAbsence"> <span>Proof of Absence</span>
+				<li class="is-active"><a href="proofsAbsence"> <span>Proof
+							of Absence</span>
 				</a></li>
 			</ul>
 		</div>
@@ -62,19 +63,13 @@
 				</aside>
 			</div>
 			<div class="column is-two-thirds">
-				<form action="getProofPresence" method="post">
+				<form action="getProofAbsence" method="post">
 					<div class="control" align="center">
-						<label class="label">Enter a SHA256 leaf hash</label> <input
-							class="input" type="text" name="leaf" id="leaf"
-							placeholder="e.g. ae3429272efe63b78fa8d9a5c36a5164522a66146089487dd1a7a4b48798627f">
+						<label class="label">Enter Your Username</label> <input
+							class="input" type="text" name="name"
+							placeholder="e.g. johnSmith">
 					</div>
-					<div class="control" align="center">
-						<label class="label">Enter a RTH</label> <input class="input"
-							type="text" name="RTH" id="RTH"
-							placeholder="e.g. ae3429272efe63b78fa8d9a5c36a5164522a66146089487dd1a7a4b48798627f">
-					</div>
-					<button class="button is-primary" type="submit" formnovalidate
-						leaf="cancel" RTH="cancel">Get Proof</button>
+					<button class="button is-primary" type="submit">Get Proof</button>
 				</form>
 				<br>
 				<!-- proof -->
@@ -82,26 +77,17 @@
 				<h1 class="title">Proof Of Presence Format</h1>
 				<h2 class="subtitle">Top level objects:</h2>
 				<ol>
-					<li><code> RTH type:String //The root tree hash of the
-							tree that generated the proof</code></li>
-					<li><code> Value type:String //The leaf hash value of
-							the leaf that the proof was generated for</code></li>
-					<li><code> Index type:String //The index that the leaf
-							is stored at. Starts counting from zero, left to right</code></li>
-					<li><code> Proof type:JSONObject //A JSON tree
-							containing the proof</code></li>
+					<li><code> RTHFromDevice type:String //The root tree
+							hash that is currently stored on the secure device</code></li>
+					<li><code> DeviceSig type:String //The signature of
+							RTHFromDevice from the device</code></li>
+					<li><code> Leaves type:JSONArray //An array containing
+							every leaf stored in the tree</code></li>
+					<li><code> FileHashes type:JSONArray //An array
+							containing all the hashes of your files</code></li>
 				</ol>
 
-				<br>
-				<h2 class="subtitle">JSON Tree</h2>
 
-				Each node contains either
-				<code>Left type:JSONObject and Right type:JSONObject</code>
-				or
-				<code>Leaf type:String //the leaf value proved to be present</code>
-				or
-				<code>Hash type:String //An intermediate node value used to
-					recreate RTH</code>
 			</div>
 			<div class="column"></div>
 		</div>

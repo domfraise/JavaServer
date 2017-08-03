@@ -446,7 +446,6 @@ public class Database {
 
 
 	public static ArrayList<String[]> adminSearch(Connection conn,String keyword,String startDate, String endDate, String startTime,String endTime) throws SQLException{
-		System.out.println("g"+keyword+"g");
 		if(keyword.equals("") || startDate.equals("") || endDate.equals("") ||startTime.equals("")||endTime.equals("")){
 			return new ArrayList<String[]>();
 		}

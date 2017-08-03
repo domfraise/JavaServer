@@ -24,46 +24,59 @@
 	</section>
 	<br>
 
+	<section class="section">
+		<div class="columns">
+			<div class="column">
 
-	<div class="columns">
-		<div class="column">
+				<aside class="menu">
+					<p class="menu-label">General</p>
+					<ul class="menu-list">
+						<li><a href="\">Home</a></li>
+						<li><a href=proofsInfo>Proofs</a></li>
+					</ul>
+					<p class="menu-label">Admin</p>
+					<ul class="menu-list">
+						<li><a href="searchPage">Search</a></li>
+						<li><a href="basket">Decryption Basket</a></li>
+						<li><a href="decryptedFiles">Decrypted Files</a></li>
+					</ul>
+					<p class="menu-label">User</p>
+					<ul class="menu-list">
+						<li><a href=userInspection>Inspect</a></li>
+						<li><a href="graphical">Graphical</a></li>
+					</ul>
+				</aside>
+			</div>
+			<div class="column">
+				<form action="viewRequests" method="post">
+					<div class="control" align="center">
+						<label class="label">Enter Your Username</label> <input
+							class="input" type="text" name="name"
+							placeholder="e.g. JaneSmith">
+					</div>
+					<button class="button is-primary" type="submit">View
+						Requests</button>
+				</form>
 
-			<aside class="menu">
-				<p class="menu-label">General</p>
-				<ul class="menu-list">
-					<li><a href="\">Home</a></li>
-					<li><a href=userInspection>Inspect</a></li>
-					<li><a>Graphical</a></li>
-					<li><a href=proofsInfo>Proofs</a></li>
-				</ul>
-			</aside>
+				<!-- proof -->
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Requester</th>
+							<th>Company</th>
+							<th>Timestamp</th>
+							<th>Justification</th>
+							<th>FileHash</th>
+						</tr>
+					</thead>
+					<tbody>
+						<!--table-->
+					</tbody>
+				</table>
+			</div>
+			<div class="column"></div>
 		</div>
-		<div class="column">
-			<form action="viewRequests">
-				<div class="control" align="center">
-					<label class="label">Enter Your Username</label> <input
-						class="input" type="text" name="name" placeholder="e.g. JaneSmith">
-				</div>
-				<button class="button is-primary"  type="submit">
-				View Requests
-				</button>
-			</form>
-		
-			<!-- proof -->
-			<table class="table">
-				<thead>
-					<tr>
-						<th>Requester</th>
-						<th>Company</th>
-						<th>Timestamp</th>
-						<th>Justification</th>
-						<th>FileHash</th>
-					</tr>
-				</thead>
-				<tbody>
-<!--table-->
-				</tbody>
-			</table>
-		</div>
-		<div class="column"></div>
-	</div>
+
+	</section>
+</body>
+</html>

@@ -15,6 +15,7 @@ public class DecryptionRequest {
 	private String reason;
 	private Timestamp timestamp;
 	private JSONObject proofOfPresence;
+	private byte[] decryptedFile;
 	/**
 	 * @param company
 	 * @param employee
@@ -30,7 +31,14 @@ public class DecryptionRequest {
 		this.reason = reason;
 		this.timestamp = Database.getTimestamp();
 		this.file = Database.getFileBytes(conn, fileHash);
+		this.decryptedFile = null;
 		
+	}
+	public byte[] getDecryptedFile() {
+		return decryptedFile;
+	}
+	public void setDecryptedFile(byte[] decryptedFile) {
+		this.decryptedFile = decryptedFile;
 	}
 	/**
 	 * adds file hash and request hash to the blockchain

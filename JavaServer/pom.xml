@@ -13,6 +13,40 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+	
+	<build>
+	<pluginManagement>
+    <plugins>
+
+      <!-- protocol buffers runner, requires protoc -->
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-protobuf-sources</id>
+            <phase>generate-sources</phase>
+            <configuration>
+              <tasks>
+                <mkdir dir="target/generated-sources/java" />
+
+                <exec executable="protoc">
+                  <arg value="--java_out=target/generated-sources/java" />
+                  <arg value="src/main/java/DeviceRPC/decyptiondevice.proto" />
+                  <arg value="--plugin=protoc-gen-grpc-java=src/main/java/DeviceRPC"/>
+                  
+                </exec>
+              </tasks>
+              <sourceRoot>target/generated-sources/java</sourceRoot>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+	</pluginManagement>
+  </build>
 
 	<dependencies>
 		<dependency>

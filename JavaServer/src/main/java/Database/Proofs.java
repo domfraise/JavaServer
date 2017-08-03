@@ -349,17 +349,17 @@ public class Proofs {
 	public static JSONObject proveAbsence(Connection conn,String user) throws SQLException{
 		JSONObject container = new JSONObject();
 		container.put("RTHFromDevice", Database.getRoot(conn));//TODO change to the authenic rth value
-		container.put("SignatureFromDevice", "SomeSigGoesHere");
+		container.put("DeviceSig", "SomeSigGoesHere");
 		JSONArray leaves = new JSONArray();
 		for(String i: Database.getLeaves(conn)){
 			leaves.add(i);
 		}
-		container.put("leaves", leaves);
+		container.put("Leaves", leaves);
 		JSONArray files = new JSONArray();
 		for(String i: Database.getMyFiles(conn, user)){
 			files.add(i);
 		}
-		container.put("fileHashes", files);
+		container.put("FileHashes", files);
 		return container;
 	}
 	

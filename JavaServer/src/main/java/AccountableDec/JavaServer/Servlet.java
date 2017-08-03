@@ -40,7 +40,7 @@ import Database.Proofs;
 public class Servlet extends HttpServlet {
 	Connection conn;
 	Set<String[]> basket = new HashSet<String[]>();
-	Map<String,byte[]> decryptedFiles = new HashMap<String,byte[]>();
+	Set<DecryptionRequest> decryptedFiles = new HashSet<DecryptionRequest>();
 
 	public void init() throws ServletException{
 		try {
@@ -74,43 +74,102 @@ public class Servlet extends HttpServlet {
 		}else if(request.getServletPath().equals("/searchPage")){
 			scanner = new Scanner(new File("adminSearch.html"));
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
-		}else if(request.getServletPath().equals("/basket.html")){
+		}else if(request.getServletPath().equals("/basket")){
 			response.getWriter().println( viewBasket(request));
-		}else if(request.getServletPath().equals("/search")){
-			response.getWriter().println(getSearchResults(request));
-		}else if(request.getServletPath().equals("/addToBasket")){
-			response.getWriter().println(addToBasket(request));
-		}else if(request.getServletPath().equals("/del")){
-			delFromBasket(request);
-			response.getWriter().println(viewBasket(request));
-		}else if(request.getServletPath().equals("/requestDec")){
-			requestDecryptions(request);
-			scanner = new Scanner(new File("adminSearch.html"));
-			response.getWriter().println(scanner.useDelimiter("\\A").next());
+		}else if(request.getServletPath().equals("/basket")){
+			
 		}else if(request.getServletPath().equals("/userInspection")){
 			scanner = new Scanner(new File("userInspection.html"));
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
-		}else if(request.getServletPath().equals("/viewRequests")){
-			response.getWriter().println(viewDecryptions(request));
 		}else if (request.getServletPath().equals("/proofsInfo")){
 			scanner = new Scanner(new File("proofsInfo.html"));
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
-		}else if (request.getServletPath().equals("/getProofPresence")){
-			response.getWriter().println(getProofPresence(request));
 		}else if (request.getServletPath().equals("/proofsPresence")){
 			scanner = new Scanner(new File("proofsPresence.html"));
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
 		}else if (request.getServletPath().equals("/proofsExtension")){
 			scanner = new Scanner(new File("proofsExtension.html"));
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
+		}else if (request.getServletPath().equals("/proofsAbsence")){
+			scanner = new Scanner(new File("proofsAbsence.html"));
+			response.getWriter().println(scanner.useDelimiter("\\A").next());
 		}
-		else if (request.getServletPath().equals("/getProofExtension")){
-			response.getWriter().println(getProofExtension(request));
 
-		}
-
-		//		scanner.close();
 	}
+	
+	/**
+	 * post requests where data is sent to the server e.g. searches/requests ect.
+	 */
+	public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException{
+		response.setStatus(HttpStatus.OK_200);
+		Scanner scanner = null;
+		 if(request.getServletPath().equals("/search")){
+				response.getWriter().println(getSearchResults(request));
+		 }else if(request.getServletPath().equals("/addToBasket")){
+				response.getWriter().println(addToBasket(request));
+		 }else if(request.getServletPath().equals("/del")){
+				delFromBasket(request);
+				response.getWriter().println(viewBasket(request));
+		 }else if(request.getServletPath().equals("/requestDec")){
+				requestDecryptions(request);
+				scanner = new Scanner(new File("adminSearch.html"));
+				response.getWriter().println(scanner.useDelimiter("\\A").next());
+		 }else if(request.getServletPath().equals("/viewRequests")){
+				response.getWriter().println(viewDecryptions(request));
+		 }else if (request.getServletPath().equals("/getProofPresence")){
+				response.getWriter().println(getProofPresence(request));
+		 }else if (request.getServletPath().equals("/getProofExtension")){
+				response.getWriter().println(getProofExtension(request));
+		 }else if (request.getServletPath().equals("/getProofAbsence")){
+				response.getWriter().println(getProofAbsence(request));
+		 }
+	}
+	
+	public String getProofAbsence(HttpServletRequest r) throws FileNotFoundException{
+		String html  = "";
+		String line;
+		String user = r.getParameter("name");
+		try{
+			String proof = Proofs.proveAbsence(conn,r.getParameter("name")).toJSONString();
+			//		generateProofFile(r);
+			Scanner scanner = new Scanner(new File("proofsAbsence.html"));
+
+			while(scanner.hasNextLine()){
+				line = scanner.useDelimiter(">").nextLine();
+				html = html.concat(line);
+
+				if(line.contains("<!-- proof -->")){
+					//				html = html.concat("	<a href=\"someproof.json\" download >Download Proof</a>");
+					html = html.concat("<div class=\"field\">\r\n" + 
+							"  <div class=\"control\">\r\n" + 
+							"    <textarea class=\"textarea is-primary\" type=\"text\" >"+proof+"</textarea>\r\n" + 
+							"  </div>\r\n" + 
+							"</div>");
+				}
+			}
+		}catch(SQLException e){
+			e.printStackTrace();
+		}catch(NullPointerException ex){
+			Scanner scanner = new Scanner(new File("proofsAbsence.html"));
+
+			while(scanner.hasNextLine()){
+				line = scanner.useDelimiter(">").nextLine();
+				html = html.concat(line);
+
+				if(line.contains("<!-- proof -->")){
+					//				html = html.concat("	<a href=\"someproof.json\" download >Download Proof</a>");
+					html = html.concat("<div class=\"field\">\r\n" + 
+							"  <div class=\"control\">\r\n" + 
+							"    <textarea class=\"textarea is-danger\" type=\"text\" >Proof Generation Failed - Username not found</textarea>\r\n" + 
+							"  </div>\r\n" + 
+							"</div>");
+				}
+			}
+		}
+		return html;
+	}
+	
+	
 	/**
 	 * Generates proof of Extesnion from the input and places it in a text area inside proofsExtesnion.html
 	 * @param r HttpServletRequest
@@ -211,6 +270,24 @@ public class Servlet extends HttpServlet {
 							"</div>");
 				}
 			}
+		}catch(IllegalArgumentException err){
+			Scanner scanner = new Scanner(new File("proofsPresence.html"));
+
+			while(scanner.hasNextLine()){
+				line = scanner.useDelimiter(">").nextLine();
+				html = html.concat(line);
+
+				if(line.contains("<!-- proof -->")){
+					//				html = html.concat("	<a href=\"someproof.json\" download >Download Proof</a>");
+					html = html.concat("<div class=\"field\">\r\n" + 
+							"  <div class=\"control\">\r\n" + 
+							"    <textarea class=\"textarea is-danger\" type=\"text\" >Proof Generation Failed - Leaf not found in tree with the given RTH. "
+							+ "Check your RTH is a current or past hash. If in doubt use the hash"
+							+ "provided by the device.</textarea>\r\n" + 
+							"  </div>\r\n" + 
+							"</div>");
+				}
+			}
 		}
 		return html;
 	}
@@ -253,8 +330,6 @@ public class Servlet extends HttpServlet {
 		ArrayList<String[]> requests = Proofs.getRequests(conn, r.getParameter("name"));
 		String html = "";int i = 0;
 		for(String[] row:requests){
-			System.out.println(i);
-
 			html=html.concat("					<tr>\r\n" + 
 					"						<td>"+row[1]+"</td>\r\n" + 
 					"						<td>"+row[0]+"</td>\r\n" + 
@@ -279,9 +354,9 @@ public class Servlet extends HttpServlet {
 				requests.add(req);
 				req.addToDatabase();
 				//TODO Generate proofs - send through rpc - Recieve back decrypted files
-				decryptedFiles.put(req.getFileHash(), req.getFile());//value need to be changed to decrypted file
+				decryptedFiles.add(req);//value need to be changed to decrypted file
+				req.setDecryptedFile(req.getFile());
 			}
-
 		}catch (SQLException e) {
 			System.err.println("DB connection failed");
 			e.printStackTrace();
@@ -318,7 +393,7 @@ public class Servlet extends HttpServlet {
 		while(scanner.hasNextLine()){
 			line = scanner.useDelimiter(">").nextLine();
 			html = html.concat(line);
-			if(line.startsWith("<!--table-->")){
+			if(line.contains("<!--table-->")){
 				html = html.concat(generateBasketTable(r));
 			}
 		}
@@ -359,7 +434,6 @@ public class Servlet extends HttpServlet {
 			if(entry.getKey().substring(0,5).equals("added") && entry.getValue()[0].equals("on")){
 				String[] item = new String[4];
 				String index = entry.getKey().substring(5,6);
-				System.out.println(index);
 				item[0] = params.get("name"+index)[0];
 				item[1] = params.get("timestamp"+index)[0];
 				item[2] = params.get("reason"+index)[0];
@@ -374,12 +448,9 @@ public class Servlet extends HttpServlet {
 		while(scanner.hasNextLine()){
 			line = scanner.useDelimiter(">").nextLine();
 			html = html.concat(line);
-			if(line.startsWith("<body>")){
+			if(line.contains("<body>")){
 				html = html.concat("<script type=\"text/javascript\">alert( \"Item(s) added to basket \nGo to Decryption Basket to view\",\"stuff\" );</script>");
 			}
-		}
-		for(String[] i:basket){
-			System.out.println(Arrays.toString(i));
 		}
 		return html;
 	}
@@ -399,7 +470,7 @@ public class Servlet extends HttpServlet {
 		while(scanner.hasNextLine()){
 			line = scanner.useDelimiter(">").nextLine();
 			html = html.concat(line);
-			if(line.startsWith("<!--table-->")){
+			if(line.contains("<!--table-->")){
 				html = html.concat(generateSearchTable(r));
 			}
 		}
