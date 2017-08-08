@@ -13,9 +13,11 @@ public class DecryptionRequest {
 	private String fileHash;
 	private byte[] file;
 	private String reason;
-	private Timestamp timestamp;
+	private Timestamp timestampRequest;
 	private JSONObject proofOfPresence;
 	private byte[] decryptedFile;
+	private String owner;
+	private Timestamp timestampFile;
 	/**
 	 * @param company
 	 * @param employee
@@ -29,10 +31,30 @@ public class DecryptionRequest {
 		this.employee = employee;
 		this.fileHash = fileHash;
 		this.reason = reason;
-		this.timestamp = Database.getTimestamp();
+		this.timestampRequest = Database.getTimestamp();
 		this.file = Database.getFileBytes(conn, fileHash);
 		this.decryptedFile = null;
+		this.owner = Database.getOwner(conn, fileHash);
+		this.timestampFile = Database.getFileTimestamp(conn, fileHash);
 		
+	}
+	public Timestamp getTimestampRequest() {
+		return timestampRequest;
+	}
+	public void setTimestampRequest(Timestamp timestampRequest) {
+		this.timestampRequest = timestampRequest;
+	}
+	public Timestamp getTimestampFile() {
+		return timestampFile;
+	}
+	public void setTimestampFile(Timestamp timestampFile) {
+		this.timestampFile = timestampFile;
+	}
+	public String getOwner() {
+		return owner;
+	}
+	public void setOwner(String owner) {
+		this.owner = owner;
 	}
 	public byte[] getDecryptedFile() {
 		return decryptedFile;
@@ -46,7 +68,7 @@ public class DecryptionRequest {
 	 */
 	public void addToDatabase() throws SQLException{
 		Database.insertEntry(conn, fileHash);
-		Database.insertRequest(conn,company, employee, fileHash, reason,timestamp);
+		Database.insertRequest(conn,company, employee, fileHash, reason,timestampRequest);
 		this.proofOfPresence = Proofs.provePresence(Database.getRoot(conn), Database.getIndex(conn, fileHash));
 	}
 	
@@ -100,7 +122,7 @@ public class DecryptionRequest {
 		this.file = file;
 	}
 	public Timestamp getTimestamp() {
-		return timestamp;
+		return timestampRequest;
 	}
 	/**
 	 * @param fileHash the fileHash to set
@@ -138,12 +160,12 @@ public class DecryptionRequest {
 
 	
 	public String getRequestHash(){
-		return TreeOps.hash(company.concat(employee).concat(reason).concat(fileHash).concat(timestamp.toString()));
+		return TreeOps.hash(company.concat(employee).concat(reason).concat(fileHash).concat(timestampRequest.toString()));
 	}
 	
 	@Override
 	public String toString() {
 		return "DecryptionRequest [company=" + company + ", employee=" + employee + ", fileHash=" + fileHash
-				+ ", reason=" + reason + ", timestamp=" + timestamp + "]";
+				+ ", reason=" + reason + ", timestamp=" + timestampRequest + "]";
 	}
 }

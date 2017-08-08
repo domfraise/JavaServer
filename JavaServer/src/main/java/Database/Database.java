@@ -163,6 +163,26 @@ public class Database {
 		return node.getInt(2);
 	}
 
+	public static String getOwner(Connection conn,String value) throws SQLException{
+		PreparedStatement getNode = conn.prepareStatement("SELECT owner FROM files WHERE hash LIKE ? ");
+		getNode.setString(1, value);
+		ResultSet node = getNode.executeQuery();
+		if(!node.isBeforeFirst()){
+			throw new IllegalArgumentException("FIle not found in log");
+		}
+		node.next();
+		return node.getString(1);
+	}
+	public static Timestamp getFileTimestamp(Connection conn,String node) throws SQLException{
+		PreparedStatement getNode = conn.prepareStatement("SELECT timestamp FROM Files WHERE hash = ? ");
+		getNode.setString(1, node);
+		ResultSet nodeG = getNode.executeQuery();
+		if(!nodeG.isBeforeFirst()){
+			return null;
+		}
+		nodeG.next();
+		return nodeG.getTimestamp(1);
+	}
 	/**
 	 * Gets all leaf entries in the tree ordered from left most to right most
 	 * @param conn Database Connection

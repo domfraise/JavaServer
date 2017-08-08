@@ -376,5 +376,14 @@ public class Proofs {
 			e.printStackTrace();
 		}
 	}
+	
+	public static void writeStringToFile(String o,String filePath){
+		try (FileWriter file = new FileWriter(filePath)) {
+			file.write(o);
+			file.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 }

@@ -97,6 +97,8 @@ public class Database {
 		ResultSet nodeG = getNode.executeQuery();
 		return nodeG;
 	}
+	
+
 
 	/**
 	 * Gets current root stored in 'roots' table
@@ -441,6 +443,17 @@ public class Database {
 		insertFileAsBytes(conn, user, file);
 	}
 
+	public static void insertFileAtDate(Connection conn,String user,byte[] file,Timestamp timestamp) throws IOException, SQLException{
+	
+		PreparedStatement addFile = conn.prepareStatement("INSERT INTO Files (owner,file,timestamp,hash) VALUES(?,?,?,?)");
+		addFile.setString(1, user);
+		addFile.setBytes(2, file);
+		Calendar cal = Calendar.getInstance();
+//		Timestamp timestamp = new Timestamp(cal.getTimeInMillis());
+		addFile.setObject(3, timestamp,java.sql.Types.TIMESTAMP);
+		addFile.setString(4, TreeOps.hash(file));
+		addFile.executeUpdate();
+	}
 
 	//create propper time stamp from entries
 

@@ -30,21 +30,29 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.simple.JSONObject;
+
+import com.google.protobuf.ByteString;
 
 import Database.Database;
 import Database.DecryptionRequest;
 import Database.Proofs;
-
+import DeviceRPC.DeviceClient;
+import io.grpc.decryptiondevice.Record;
+import io.grpc.decryptiondevice.RootTreeHash;
+import org.apache.commons.codec.binary.Hex;
 public class Servlet extends HttpServlet {
 	Connection conn;
+	DeviceClient rpcClient;
 	Set<String[]> basket = new HashSet<String[]>();
-	Set<DecryptionRequest> decryptedFiles = new HashSet<DecryptionRequest>();
+	Map<String,HashSet<DecryptionRequest>>decryptedFiles = new HashMap<String,HashSet<DecryptionRequest>>();
 
 	public void init() throws ServletException{
 		try {
 			conn = Database.getConnection();
+			rpcClient = new DeviceClient("localhost", 50051);
 		} catch (SQLException e) {
 			System.out.println("couldn't connect to  DB");
 			e.printStackTrace();
@@ -76,8 +84,6 @@ public class Servlet extends HttpServlet {
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
 		}else if(request.getServletPath().equals("/basket")){
 			response.getWriter().println( viewBasket(request));
-		}else if(request.getServletPath().equals("/basket")){
-			
 		}else if(request.getServletPath().equals("/userInspection")){
 			scanner = new Scanner(new File("userInspection.html"));
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
@@ -93,38 +99,145 @@ public class Servlet extends HttpServlet {
 		}else if (request.getServletPath().equals("/proofsAbsence")){
 			scanner = new Scanner(new File("proofsAbsence.html"));
 			response.getWriter().println(scanner.useDelimiter("\\A").next());
+		}else if (request.getServletPath().equals("/decryptedFiles")){
+			scanner = new Scanner(new File("decryptedFiles.html"));
+			response.getWriter().println(scanner.useDelimiter("\\A").next());
+		}else if (request.getServletPath().equals("/proofsDevice")){
+			scanner = new Scanner(new File("proofsDevice.html"));
+			response.getWriter().println(scanner.useDelimiter("\\A").next());
 		}
 
 	}
-	
+
 	/**
 	 * post requests where data is sent to the server e.g. searches/requests ect.
 	 */
-	public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException{
+	public void doPost(HttpServletRequest request, HttpServletResponse response) {
 		response.setStatus(HttpStatus.OK_200);
 		Scanner scanner = null;
-		 if(request.getServletPath().equals("/search")){
+		try {
+			if(request.getServletPath().equals("/search")){
 				response.getWriter().println(getSearchResults(request));
-		 }else if(request.getServletPath().equals("/addToBasket")){
+			}else if(request.getServletPath().equals("/addToBasket")){
+				System.out.println("request made");
 				response.getWriter().println(addToBasket(request));
-		 }else if(request.getServletPath().equals("/del")){
+			}else if(request.getServletPath().equals("/del")){
 				delFromBasket(request);
 				response.getWriter().println(viewBasket(request));
-		 }else if(request.getServletPath().equals("/requestDec")){
+			}else if(request.getServletPath().equals("/requestDec")){
 				requestDecryptions(request);
 				scanner = new Scanner(new File("adminSearch.html"));
 				response.getWriter().println(scanner.useDelimiter("\\A").next());
-		 }else if(request.getServletPath().equals("/viewRequests")){
+			}else if(request.getServletPath().equals("/viewRequests")){
 				response.getWriter().println(viewDecryptions(request));
-		 }else if (request.getServletPath().equals("/getProofPresence")){
+			}else if (request.getServletPath().equals("/getProofPresence")){
 				response.getWriter().println(getProofPresence(request));
-		 }else if (request.getServletPath().equals("/getProofExtension")){
+			}else if (request.getServletPath().equals("/getProofExtension")){
 				response.getWriter().println(getProofExtension(request));
-		 }else if (request.getServletPath().equals("/getProofAbsence")){
+			}else if (request.getServletPath().equals("/getProofAbsence")){
 				response.getWriter().println(getProofAbsence(request));
-		 }
+			}else if (request.getServletPath().equals("/getPlainTexts")){
+				response.getWriter().println(getPlainTexts(request));
+			}else if (request.getServletPath().equals("/getDeviceInfo")){
+				response.getWriter().println(getDeviceInfo(request));
+			}else if (request.getServletPath().equals("/downloadPlainText")){
+				response.setContentType("text/plain");
+				response.setHeader("Content-Disposition", "attachment;filename=" + request.getParameter("hash"));
+				response.getOutputStream().write(getPlainText(request));
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
-	
+
+	public String getDeviceInfo(HttpServletRequest r) throws FileNotFoundException{
+		String html  = "";
+		String line;
+		//		generateProofFile(r);
+		Scanner scanner = new Scanner(new File("proofsDevice.html"));
+
+		while(scanner.hasNextLine()){
+			line = scanner.useDelimiter(">").nextLine();
+			html = html.concat(line);
+			if(line.contains("<!-- device -->")){
+
+				html = html.concat("		<h1 class=\"title\">Current Root Tree Hash</h2>\r\n<p>" + 
+						Hex.encodeHexString(rpcClient.getRootTreeHash(ByteString.copyFromUtf8("nonce")).getRth().toByteArray()) + 
+						"				</p><br><br>\r\n" + 
+						"				<h2 class=\"title\">Signature on RTH</h2>\r\n<p>" + 
+						Hex.encodeHexString(rpcClient.getRootTreeHash(ByteString.copyFromUtf8("nonce")).getSig().toByteArray()) + 
+						"				</p><br><br>\r\n" + 
+						"				<h2 class=\"title\">Public Encryption Key</h2>\r\n" + 
+						rpcClient.getPublicKey(ByteString.copyFromUtf8("nonce")).getRSAEncryptionKey().toStringUtf8() + 
+						"				<br><br>\r\n" + 
+						"				<h2 class=\"title\">Verification Key</h2>\r\n" + 
+						rpcClient.getPublicKey(ByteString.copyFromUtf8("nonce")).getRSAVerificationKey().toStringUtf8() + 
+						"				<br>");
+
+			}
+		}
+		return html;
+	}
+
+	public byte[] getPlainText(HttpServletRequest r){
+		String name= r.getParameter("name");
+		String hash = r.getParameter("hash");
+		HashSet<DecryptionRequest> reqs = decryptedFiles.get(name);
+		for(DecryptionRequest req:reqs){
+			if(req.getFileHash().equals(hash)){
+				if(req.getDecryptedFile()!= null){
+					return req.getDecryptedFile();
+				}else{
+					System.err.println("File not decrypted propperly - decrpytedFile = null");
+				}
+			}
+		}
+		return null;
+
+	}
+
+
+	public String getPlainTexts(HttpServletRequest r) throws FileNotFoundException{
+		String html  = "";
+		String line;
+		String user = r.getParameter("name");
+		//		generateProofFile(r);
+		Scanner scanner = new Scanner(new File("decryptedFiles.html"));
+
+		while(scanner.hasNextLine()){
+			line = scanner.useDelimiter(">").nextLine();
+			html = html.concat(line);
+			if(line.contains("<!--table-->")){
+				try{
+					html = html.concat(generatePlainTextTable(r));
+				}catch (SQLException e) {
+					html="";
+					e.printStackTrace();
+				}
+			}if(line.contains("<!-- var -->")){
+				html = html.concat("<input type=\"hidden\" name=\"name\" value = \""+user+"\">");
+			}
+		}
+		return html;
+	}
+
+	private String generatePlainTextTable(HttpServletRequest r) throws SQLException{
+		String name = r.getParameter("name");
+		HashSet<DecryptionRequest> requests = decryptedFiles.get(name);
+		String html = "";int i = 0;
+		for(DecryptionRequest row:requests){
+			html=html.concat("					<tr>\r\n" + 
+					"						<td>"+row.getOwner()+"</td>\r\n" + 
+					"						<td>"+row.getTimestampFile()+"</td>\r\n" + 
+					"						<td>"+row.getReason()+"</td>\r\n" + 
+					"						<td>"+row.getFileHash()+"</td>\r\n" + 
+					"						<td><button class=\"button is-primary\" name =\"hash\" value="+row.getFileHash()+">Download</td>\r\n "+
+					"					</tr>	");
+		}
+		return html;
+	}
+
 	public String getProofAbsence(HttpServletRequest r) throws FileNotFoundException{
 		String html  = "";
 		String line;
@@ -168,8 +281,8 @@ public class Servlet extends HttpServlet {
 		}
 		return html;
 	}
-	
-	
+
+
 	/**
 	 * Generates proof of Extesnion from the input and places it in a text area inside proofsExtesnion.html
 	 * @param r HttpServletRequest
@@ -347,21 +460,46 @@ public class Servlet extends HttpServlet {
 	 */
 	public void requestDecryptions(HttpServletRequest r){
 		try{
-			Set<DecryptionRequest> requests = new HashSet<DecryptionRequest>();
+			//			RootTreeHash currentRTH = rpcClient.getRootTreeHash(ByteString.copyFromUtf8("nonce"));
+			//			String rth = currentRTH.getRth().toString();
+			//TODO use actual rth from device ^^
+			String rth = Database.getRoot(conn);
+			String name = r.getParameter("name");
+			System.out.println("got to here - servelt - reququesst dec");
+			HashSet<DecryptionRequest> requests;
+			if(!decryptedFiles.containsKey(name)){
+			
+				requests = new HashSet<DecryptionRequest>();
+				decryptedFiles.put(name, requests);
+			}
 			for(Iterator<String[]> i = basket.iterator();i.hasNext();){
 				String[] row = i.next();
 				DecryptionRequest req = new DecryptionRequest(conn, r.getParameter("company"), r.getParameter("name"), row[3], row[2]);
-				requests.add(req);
 				req.addToDatabase();
-				//TODO Generate proofs - send through rpc - Recieve back decrypted files
-				decryptedFiles.add(req);//value need to be changed to decrypted file
+				String newRTH = Database.getRoot(conn);
+				String proofExtesnion = Proofs.proveExtension(conn, rth, newRTH).toJSONString();
+//				Record response = rpcClient.decryptRecord(req.getProofOfPresence().toJSONString(),proofExtesnion ,ByteString.copyFrom(req.getFile()));
+//				req.setDecryptedFile(response.getPlaintext().toByteArray());
 				req.setDecryptedFile(req.getFile());
+				decryptedFiles.get(name).add(req);
 			}
+			basket.clear();
 		}catch (SQLException e) {
 			System.err.println("DB connection failed");
 			e.printStackTrace();
 
 		}
+		//		for(DecryptionRequest i:decryptedFiles){
+		//			System.out.println("file decrpted");
+		//			System.out.println(i.getFileHash());
+		//			System.out.println(i.getDecryptedFile().toString());
+		//			try {
+		//				FileUtils.writeByteArrayToFile(new File("C:\\Users\\Dom\\Desktop\\Location Files\\domfraisePT.txt"), i.getDecryptedFile());
+		//			} catch (IOException e) {
+		//				// TODO Auto-generated catch block
+		//				e.printStackTrace();
+		//			}
+		//		}
 	}
 
 	/**
@@ -428,8 +566,13 @@ public class Servlet extends HttpServlet {
 	 */
 	public String addToBasket(HttpServletRequest r) throws FileNotFoundException{
 		//		System.out.println(r.getParameter("name0"));
+
+		System.out.println("meh");
+		System.out.println(r.getParameter("reason0"));
 		Map<String,String[]> params = r.getParameterMap();
+		System.out.println("here");
 		Set<Map.Entry<String, String[]>> entrySet = params.entrySet();
+		System.out.println("there");
 		for(Map.Entry<String, String[]> entry: entrySet){
 			if(entry.getKey().substring(0,5).equals("added") && entry.getValue()[0].equals("on")){
 				String[] item = new String[4];
@@ -519,7 +662,7 @@ public class Servlet extends HttpServlet {
 					"		</div></tbody></table>";
 
 
-			for(int i = 0;i<results.size();i++)
+			for(int i = 0;i<results.size() && i<100;i++)
 			{
 				String hiddenVars=
 						"			<input type=\"hidden\" name=\"name"+i+"\" value = \""+results.get(i)[0]+"\">" +

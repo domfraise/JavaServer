@@ -16,18 +16,35 @@
 	<section class="hero is-primary">
 		<div class="hero-body">
 			<div class="container" align="center">
-				<h1 class="title">Decrypted Files</h1>
+				<h1 class="title">Proofs</h1>
 				<br>
-				<h2 class="subtitle">View Files you have requested the
-					decryption of</h2>
+				<h2 class="subtitle">Generate cryptographic proofs for your
+					peace of mind</h2>
 			</div>
 		</div>
 	</section>
-	<br>
+
 	<section class="section">
+
+		<div class="tabs is-boxed is-centered">
+			<ul>
+				<li><a href=proofsInfo> <span>Information</span>
+				</a></li>
+				<li><a href="proofsPresence"> <span>Proof of
+							Presence</span>
+				</a></li>
+				<li><a href="proofsExtension"> <span>Proof of
+							Extension</span>
+				</a></li>
+				<li><a href="proofsAbsence"> <span>Proof of Absence</span>
+				</a></li>
+				<li><a href="proofsDevice"> <span>Secure Device</span>
+				</a></li>
+
+			</ul>
+		</div>
 		<div class="columns">
 			<div class="column">
-
 				<aside class="menu">
 					<p class="menu-label">General</p>
 					<ul class="menu-list">
@@ -46,42 +63,23 @@
 						<li><a href="graphical">Graphical</a></li>
 					</ul>
 				</aside>
-
 			</div>
-			<div class="column">
-				<form action="getPlainTexts" method="post">
-					<div class="control" align="center">
-						<label class="label">Enter Your username</label> <input
-							class="input" type="text" name="name"
-							placeholder="e.g. JaneSmith">
-							<button class="button is-primary" type="submit">View Your
-							Decryptions</button>
-					</div>
-				</form>
+			<div class="column is-two-thirds">
+				<div align="center">
+					<form action="getDeviceInfo" method="post">
 
-				<form action="downloadPlainText" method="post">
-				<!-- var -->
-					<table class="table">
-						<thead>
-							<tr>
-								<th>User</th>
-								<th>TimeStamp</th>
-								<th>Justification</th>
-								<th>FileHash</th>
-								<th>Download</th>
-							</tr>
-						</thead>
-						<tbody>
-							<!--table-->
-						</tbody>
-					</table>
+						<button class="button is-primary" type="submit">Get
+							Device Info</button>
 
-				</form>
+					</form>
+				</div>
+				<!-- device -->
+
+
 
 			</div>
 			<div class="column"></div>
 		</div>
-
 	</section>
 </body>
 </html>

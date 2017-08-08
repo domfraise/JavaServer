@@ -1,4 +1,4 @@
-package blockchain;
+
 
 import static org.junit.Assert.*;
 
@@ -16,15 +16,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.prefs.PreferenceChangeEvent;
 
-import static blockchain.Database.*;
-import static blockchain.TreeOps.extend;
-import static blockchain.Proofs.*;
+import static Database.Database.*;
+import static Database.TreeOps.*;
+import static Database.Proofs.*;
+import static Database.Database.*;
 
 import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.postgresql.util.GT;
+
+import Database.Tree;
+import crypto.Encryption;
 
 
 public class DatabaseTest {
@@ -39,23 +43,23 @@ public class DatabaseTest {
 	}
 	//	@Test
 	//	public void testGetPow2(){
-	//		assertEquals(4,Database.getPowOf2(3));
+	//		assertEquals(4,getPowOf2(3));
 	//	}
 	//	@Test
 	//	public void testGetPow21(){
-	//		assertEquals(4,Database.getPowOf2(4));
+	//		assertEquals(4,getPowOf2(4));
 	//	}
 	//	@Test
 	//	public void testGetPow22(){
-	//		assertEquals(8,Database.getPowOf2(6));
+	//		assertEquals(8,getPowOf2(6));
 	//	}
 	//	@Test
 	//	public void testGetPow23(){
-	//		assertEquals(8,Database.getPowOf2(7));
+	//		assertEquals(8,getPowOf2(7));
 	//	}
 	@Test
 	public void testGetPow24(){
-		assertEquals(8,Database.getPowOf2(8));
+		assertEquals(8,getPowOf2(8));
 	}
 	@Test
 	public void testGetlog(){
@@ -126,26 +130,26 @@ public class DatabaseTest {
 	public void testrRth(){
 
 		try {
-			Database.insertEntry(conn, "1");
-			Database.insertEntry(conn, "2");
-			Database.insertEntry(conn, "3");
-			Database.insertEntry(conn, "4");
-			Database.insertEntry(conn, "5");
-			Database.insertEntry(conn, "6");
-			Database.insertEntry(conn, "7");
-			Database.insertEntry(conn, "8");
-			Database.insertEntry(conn, "9");
-			Database.insertEntry(conn, "10");
-			Database.insertEntry(conn, "11");
-			Database.insertEntry(conn, "12");
-			Database.insertEntry(conn, "13");
-			Database.insertEntry(conn, "14");
-			Database.insertEntry(conn, "15");
-			Database.insertEntry(conn, "16");
-			Database.insertEntry(conn, "17");
-			Database.insertEntry(conn, "18");
-			Database.insertEntry(conn, "19");
-			Database.insertEntry(conn, "20");
+			insertEntry(conn, "1");
+			insertEntry(conn, "2");
+			insertEntry(conn, "3");
+			insertEntry(conn, "4");
+			insertEntry(conn, "5");
+			insertEntry(conn, "6");
+			insertEntry(conn, "7");
+			insertEntry(conn, "8");
+			insertEntry(conn, "9");
+			insertEntry(conn, "10");
+			insertEntry(conn, "11");
+			insertEntry(conn, "12");
+			insertEntry(conn, "13");
+			insertEntry(conn, "14");
+			insertEntry(conn, "15");
+			insertEntry(conn, "16");
+			insertEntry(conn, "17");
+			insertEntry(conn, "18");
+			insertEntry(conn, "19");
+			insertEntry(conn, "20");
 			PreparedStatement roots = conn.prepareStatement("SELECT * FROM roots ORDER BY size ASC");
 			ResultSet rootsSet = roots.executeQuery();
 			Tree o = new Tree();
@@ -168,21 +172,21 @@ public class DatabaseTest {
 	public void testInsert1(){
 		try {
 
-			Database.insertEntry(conn, "1");
-			Database.insertEntry(conn, "2");
-			Database.insertEntry(conn, "3");
-			Database.insertEntry(conn, "4");
-			Database.insertEntry(conn, "5");
-			Database.insertEntry(conn, "6");
-			Database.insertEntry(conn, "7");
-			Database.insertEntry(conn, "8");
-			Database.insertEntry(conn, "9");
-			Database.insertEntry(conn, "10");
-			Database.insertEntry(conn, "11");
+			insertEntry(conn, "1");
+			insertEntry(conn, "2");
+			insertEntry(conn, "3");
+			insertEntry(conn, "4");
+			insertEntry(conn, "5");
+			insertEntry(conn, "6");
+			insertEntry(conn, "7");
+			insertEntry(conn, "8");
+			insertEntry(conn, "9");
+			insertEntry(conn, "10");
+			insertEntry(conn, "11");
 
 			PreparedStatement nodes = conn.prepareStatement("SELECT * FROM Tree ");
 			ResultSet nodesSet = nodes.executeQuery();
-			String hash12 = TreeOps.hash("12");
+			String hash12 = hash("12");
 			while(nodesSet.next()){
 				System.out.println("node: "+nodesSet.getString(1)+" left: "+nodesSet.getString(2)+" right: "+nodesSet.getString(3)+" size: "+nodesSet.getInt(4)+" path length: "+nodesSet.getInt(5));
 			}
@@ -219,17 +223,17 @@ public class DatabaseTest {
 	@Test
 	public void seeTable(){
 		try {
-			Database.insertEntry(conn, "1");
-			Database.insertEntry(conn, "2");
-			Database.insertEntry(conn, "3");
-			Database.insertEntry(conn, "4");
-			Database.insertEntry(conn, "5");
-			Database.insertEntry(conn, "6");
-			Database.insertEntry(conn, "7");
-			Database.insertEntry(conn, "8");
-			Database.insertEntry(conn, "9");
-			Database.insertEntry(conn, "10");
-			Database.insertEntry(conn, "11");
+			insertEntry(conn, "1");
+			insertEntry(conn, "2");
+			insertEntry(conn, "3");
+			insertEntry(conn, "4");
+			insertEntry(conn, "5");
+			insertEntry(conn, "6");
+			insertEntry(conn, "7");
+			insertEntry(conn, "8");
+			insertEntry(conn, "9");
+			insertEntry(conn, "10");
+			insertEntry(conn, "11");
 			PreparedStatement nodes = conn.prepareStatement("SELECT * FROM Tree");
 			ResultSet nodesSet = nodes.executeQuery();
 			while(nodesSet.next()){
@@ -337,12 +341,12 @@ public class DatabaseTest {
 	@Test
 	public void slelc(){
 		try {
-			Database.insertEntry(conn, "1");
-			Database.insertEntry(conn, "2");
-			Database.insertEntry(conn, "3");
-			Database.insertEntry(conn, "4");
-			Database.insertEntry(conn, "5");
-			Database.insertEntry(conn, "6");
+			insertEntry(conn, "1");
+			insertEntry(conn, "2");
+			insertEntry(conn, "3");
+			insertEntry(conn, "4");
+			insertEntry(conn, "5");
+			insertEntry(conn, "6");
 			ArrayList<String> actual = getLeaves(conn);
 			ArrayList<String> expected = new ArrayList<String>();
 			expected.add("1");
@@ -365,19 +369,19 @@ public class DatabaseTest {
 			ArrayList<String> expected = new ArrayList<String>();
 			Path path = Paths.get("C:\\Users\\Dom\\Documents\\myfile1.txt");
 			byte[] file = Files.readAllBytes(path);
-			expected.add(TreeOps.hash(file));
+			expected.add(hash(file));
 			path = Paths.get("C:\\Users\\Dom\\Documents\\myfile2.txt");
 			file = Files.readAllBytes(path);
-			expected.add(TreeOps.hash(file));
+			expected.add(hash(file));
 			path = Paths.get("C:\\Users\\Dom\\Documents\\myfile3.txt");
 			file = Files.readAllBytes(path);
-			expected.add(TreeOps.hash(file));
+			expected.add(hash(file));
 			path = Paths.get("C:\\Users\\Dom\\Documents\\myfile4.txt");
 			file = Files.readAllBytes(path);
-			expected.add(TreeOps.hash(file));
+			expected.add(hash(file));
 			path = Paths.get("C:\\Users\\Dom\\Documents\\myfile5.txt");
 			file = Files.readAllBytes(path);
-			expected.add(TreeOps.hash(file));
+			expected.add(hash(file));
 			assertEquals(expected, files);
 		} catch (SQLException | IOException e) {
 			// TODO Auto-generated catch block
@@ -389,7 +393,7 @@ public class DatabaseTest {
 	@Test
 	public void testGetRequest(){
 		try {
-			System.out.println(TreeOps.hash(""));
+			System.out.println(hash(""));
 			String[] actual = getRequest(conn, hashFile("C:\\Users\\Dom\\Documents\\myfile1.txt"));
 			String [] expected = new String[5];
 			expected[0] = "Google";
@@ -416,7 +420,7 @@ public class DatabaseTest {
 	@Test
 	public void testadminSearch(){
 		try {
-			ArrayList<String[]> actual = Database.adminSearch(conn, "domfraise", "2017-07-06","2017-07-06", "13:54","13:56");
+			ArrayList<String[]> actual = adminSearch(conn, "domfraise", "2017-07-06","2017-07-06", "13:54","13:56");
 			for(String[] i: actual){
 				System.out.println((i[1]));
 			}
@@ -438,7 +442,7 @@ public class DatabaseTest {
 			del.executeUpdate();
 			del = conn.prepareStatement("Delete FROM requests");
 			del.executeUpdate();
-			insertEntry(conn, TreeOps.hash(""));
+			insertEntry(conn, hash(""));
 
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
